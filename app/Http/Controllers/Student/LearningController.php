@@ -12,38 +12,51 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class LearningController extends Controller
 {
-    public function course(Request $request, Course $course)
+    public function course(Request $request, Course $course): InertiaResponse
     {
         $this->authorize('viewContent', $course);
-        $enrollment = $this->enrollmentOrFail($request, $course);
-        $course->load(['sections.lessons' => fn ($query) => $query->published()->orderBy('order')]);
+        $enrollment = $this->enrollmentOrFail($request, $course)->fresh();
+        $course->load([
+            'sections' => fn ($query) => $query->orderBy('order'),
+            'sections.lessons' => fn ($query) => $query->published()->orderBy('order'),
+        ]);
 
-        $lesson = $this->lastOrFirstLesson($request, $course);
-        if (! $lesson) {
-            return Inertia::render('Student/Learn/Course', [
-                'course' => $course,
-                'enrollment' => $enrollment,
-                'currentLesson' => null,
-                'completedLessonIds' => [],
-            ]);
-        }
+        $completedLessonIds = $request->user()->lessonProgress()
+            ->where('is_completed', true)
+            ->whereIn('lesson_id', $course->lessons()->published()->pluck('lessons.id'))
+            ->pluck('lesson_id')
+            ->values();
 
-        return redirect()->route('student.learn.lesson', [$course, $lesson]);
+        $orderedLessons = $this->orderedPublishedLessons($course);
+        $resumeLesson = $this->lastOrFirstLesson($request, $course);
+
+        return Inertia::render('Student/Learn/Course', [
+            'course' => $course,
+            'enrollment' => $enrollment,
+            'completedLessonIds' => $completedLessonIds,
+            'resumeUrl' => $resumeLesson ? route('student.learn.lesson', [$course, $resumeLesson]) : null,
+            'courseCompleted' => (int) $enrollment->progress_percentage >= 100,
+            'publishedLessonsCount' => $orderedLessons->count(),
+        ]);
     }
 
-    public function lesson(Request $request, Course $course, Lesson $lesson)
+    public function lesson(Request $request, Course $course, Lesson $lesson): InertiaResponse
     {
         $this->authorize('viewContent', $course);
         $enrollment = $this->enrollmentOrFail($request, $course);
         $this->abortIfLessonNotInCourse($lesson, $course);
         $this->authorize('view', $lesson);
 
-        $course->load(['sections.lessons' => fn ($query) => $query->published()->orderBy('order')]);
-        $lesson->load('attachments', 'section');
+        $course->load([
+            'sections' => fn ($query) => $query->orderBy('order'),
+            'sections.lessons' => fn ($query) => $query->published()->orderBy('order'),
+        ]);
+        $lesson->load('attachments', 'media', 'section');
 
         LessonProgress::updateOrCreate(
             ['user_id' => $request->user()->id, 'lesson_id' => $lesson->id],
@@ -52,14 +65,11 @@ class LearningController extends Controller
 
         $completedLessonIds = $request->user()->lessonProgress()
             ->where('is_completed', true)
-            ->whereIn('lesson_id', $course->lessons()->pluck('lessons.id'))
+            ->whereIn('lesson_id', $course->lessons()->published()->pluck('lessons.id'))
             ->pluck('lesson_id')
             ->values();
 
-        $orderedLessons = $course->sections
-            ->flatMap(fn ($section) => $section->lessons)
-            ->values();
-
+        $orderedLessons = $this->orderedPublishedLessons($course);
         $currentIndex = $orderedLessons->search(fn ($item) => $item->id === $lesson->id);
         $previousLesson = $currentIndex !== false && $currentIndex > 0 ? $orderedLessons->get($currentIndex - 1) : null;
         $nextLesson = $currentIndex !== false ? $orderedLessons->get($currentIndex + 1) : null;
@@ -72,6 +82,8 @@ class LearningController extends Controller
             'previousLesson' => $previousLesson,
             'nextLesson' => $nextLesson,
             'isCompleted' => $completedLessonIds->contains($lesson->id),
+            'courseOverviewUrl' => route('student.learn.course', $course),
+            'courseCompleted' => (int) $enrollment->progress_percentage >= 100,
         ]);
     }
 
@@ -108,6 +120,7 @@ class LearningController extends Controller
     {
         $enrollment = $request->user()->enrollments()->where('course_id', $course->id)->first();
         abort_unless($enrollment, 403);
+
         return $enrollment;
     }
 
@@ -133,7 +146,16 @@ class LearningController extends Controller
                 ->firstWhere('id', $lastProgress->lesson_id);
         }
 
-        return $course->lessons()->published()->orderBy('course_sections.order')->orderBy('lessons.order')->first();
+        return $course->sections
+            ->flatMap(fn ($section) => $section->lessons)
+            ->first();
+    }
+
+    private function orderedPublishedLessons(Course $course)
+    {
+        return $course->sections
+            ->flatMap(fn ($section) => $section->lessons)
+            ->values();
     }
 
     private function refreshEnrollmentProgress(int $userId, Course $course): void

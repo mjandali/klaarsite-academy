@@ -6,6 +6,7 @@ use App\Models\Course;
 use App\Models\CourseSection;
 use App\Models\Lesson;
 use App\Models\User;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class LessonPublishingTest extends TestCase
@@ -73,10 +74,34 @@ class LessonPublishingTest extends TestCase
             ->create(['status' => 'draft']);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.courses.edit', ['course' => $this->course->id]));
+            ->get(route('admin.lessons.preview', ['lesson' => $draftLesson->id]));
 
-        $response->assertOk();
-        $response->assertSee($draftLesson->title);
+        $response->assertInertia(fn (Assert $page) => $page
+            ->component('Admin/Lessons/Preview')
+            ->where('currentLesson.id', $draftLesson->id)
+            ->where('currentLesson.status', 'draft')
+        );
+    }
+
+    public function test_public_course_detail_counts_only_published_lessons(): void
+    {
+        $section = CourseSection::factory()
+            ->for($this->course)
+            ->create();
+
+        Lesson::factory()
+            ->for($section, 'section')
+            ->create(['status' => 'draft']);
+
+        Lesson::factory()
+            ->for($section, 'section')
+            ->create(['status' => 'published']);
+
+        $this->get(route('courses.show', $this->course))
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Courses/Show')
+                ->where('course.lessons_count', 1)
+            );
     }
 
     public function test_draft_lessons_do_not_count_in_progress()

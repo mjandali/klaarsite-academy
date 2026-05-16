@@ -28,8 +28,11 @@
                                 <td class="px-5 py-4">{{ Number(course.price) <= 0 ? t('common.free') : `${course.price} ${course.currency}` }}</td>
                                 <td class="px-5 py-4 capitalize">{{ course.course_format }}</td>
                                 <td class="px-5 py-4">
-                                    <span :class="course.is_published ? 'bg-green-100 text-green-800' : 'bg-slate-100 text-slate-700'" class="px-2 py-1 rounded text-sm">
-                                        {{ course.is_published ? t('admin.published') : t('admin.draft') }}
+                                    <span
+                                        :class="course.status === 'published' ? 'bg-green-100 text-green-800' : course.status === 'archived' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'"
+                                        class="px-2 py-1 rounded text-sm"
+                                    >
+                                        {{ course.status === 'published' ? t('admin.published') : course.status === 'archived' ? 'Archived' : t('admin.draft') }}
                                     </span>
                                 </td>
                                 <td class="px-5 py-4">{{ course.sections_count }} / {{ course.lessons_count }}</td>

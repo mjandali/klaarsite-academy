@@ -7,6 +7,7 @@ use App\Models\CourseSection;
 use App\Models\Lesson;
 use App\Models\LessonProgress;
 use App\Models\User;
+use Carbon\Carbon;
 use Tests\TestCase;
 
 class CoursePublishingTest extends TestCase
@@ -82,8 +83,55 @@ class CoursePublishingTest extends TestCase
 
         $this->assertNull($course->published_at);
 
-        $course->update(['status' => 'published', 'published_at' => now()]);
+        $this->actingAs($this->admin)
+            ->put(route('admin.courses.update', $course), [
+                'title' => $course->title,
+                'subtitle' => $course->subtitle,
+                'description' => $course->description,
+                'price' => $course->price,
+                'currency' => $course->currency,
+                'level' => $course->level,
+                'duration_hours' => $course->duration_hours,
+                'meta_description' => $course->meta_description,
+                'course_format' => $course->course_format,
+                'status' => 'published',
+                'slug' => $course->slug,
+            ])
+            ->assertRedirect();
 
         $this->assertNotNull($course->fresh()->published_at);
+    }
+
+    public function test_published_at_is_not_reset_when_editing_an_already_published_course(): void
+    {
+        $publishedAt = Carbon::parse('2026-05-01 10:00:00');
+        $course = Course::factory()
+            ->for($this->admin)
+            ->create([
+                'status' => 'published',
+                'published_at' => $publishedAt,
+            ]);
+
+        Carbon::setTestNow($publishedAt->copy()->addDays(5));
+
+        $this->actingAs($this->admin)
+            ->put(route('admin.courses.update', $course), [
+                'title' => $course->title.' Updated',
+                'subtitle' => $course->subtitle,
+                'description' => $course->description,
+                'price' => $course->price,
+                'currency' => $course->currency,
+                'level' => $course->level,
+                'duration_hours' => $course->duration_hours,
+                'meta_description' => $course->meta_description,
+                'course_format' => $course->course_format,
+                'status' => 'published',
+                'slug' => $course->slug,
+            ])
+            ->assertRedirect();
+
+        $this->assertTrue($course->fresh()->published_at->equalTo($publishedAt));
+
+        Carbon::setTestNow();
     }
 }

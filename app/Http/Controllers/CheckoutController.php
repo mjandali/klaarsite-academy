@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Course;
 use App\Models\Order;
+use App\Support\AnalyticsTracker;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,11 +50,13 @@ class CheckoutController extends Controller
             'status' => 'pending',
         ]);
 
+        app(AnalyticsTracker::class)->captureCheckoutStart($request, $order);
+
         if (config('services.stripe.secret')) {
             return $this->redirectToStripe($order, $course);
         }
 
-        if ((bool) config('services.payments.test_mode')) {
+        if ($this->testCheckoutEnabled()) {
             return redirect()->route('checkout.test', $order);
         }
 
@@ -63,7 +66,7 @@ class CheckoutController extends Controller
     public function test(Order $order)
     {
         $this->authorizeOrder($order);
-        abort_if(app()->environment('production') && ! config('services.payments.test_mode'), 403);
+        abort_unless($this->testCheckoutEnabled(), 403);
 
         $order->load('course');
 
@@ -73,7 +76,7 @@ class CheckoutController extends Controller
     public function completeTest(Request $request, Order $order): RedirectResponse
     {
         $this->authorizeOrder($order);
-        abort_if(app()->environment('production') && ! config('services.payments.test_mode'), 403);
+        abort_unless($this->testCheckoutEnabled(), 403);
 
         $this->completeOrder($order, 'test_'.$order->order_number, ['mode' => 'local_test'], 'test');
 
@@ -101,6 +104,14 @@ class CheckoutController extends Controller
             return redirect()->route('student.orders')->with('error', $this->paymentPendingMessage());
         }
 
+        if ($this->isProductionEnvironment()) {
+            if (! config('services.stripe.webhook_secret')) {
+                return redirect()->route('student.orders')->with('error', $this->paymentWebhookConfigurationMessage());
+            }
+
+            return redirect()->route('student.orders')->with('success', $this->paymentAwaitingWebhookMessage());
+        }
+
         if (! config('services.stripe.webhook_secret')) {
             $this->completeOrder($order, $sessionId, $session, 'success');
 
@@ -121,8 +132,15 @@ class CheckoutController extends Controller
     {
         $payload = $request->getContent();
         $signature = $request->header('Stripe-Signature');
+        $webhookSecret = (string) config('services.stripe.webhook_secret');
 
-        if (config('services.stripe.webhook_secret') && ! $this->validStripeSignature($payload, $signature)) {
+        if ($this->isProductionEnvironment() && $webhookSecret === '') {
+            Log::error('Stripe webhook secret is missing in production.');
+
+            return response('Webhook secret is not configured', 503);
+        }
+
+        if ($webhookSecret !== '' && ! $this->validStripeSignature($payload, $signature)) {
             return response('Invalid signature', 400);
         }
 
@@ -230,6 +248,7 @@ class CheckoutController extends Controller
     {
         DB::transaction(function () use ($order, $transactionId, $responseData, $source): void {
             $order = Order::with(['user', 'course', 'payments'])->lockForUpdate()->findOrFail($order->id);
+            $wasCompleted = $order->status === 'completed';
 
             $payment = $order->payments()
                 ->where('transaction_id', $transactionId)
@@ -259,11 +278,15 @@ class CheckoutController extends Controller
                 $order->payments()->create($paymentData);
             }
 
-            if ($order->status !== 'completed') {
+            if (! $wasCompleted) {
                 $order->update(['status' => 'completed']);
             }
 
             $this->enroll($order->user, $order->course);
+
+            if (! $wasCompleted) {
+                app(AnalyticsTracker::class)->capturePurchaseCompleted($order, $source);
+            }
         });
     }
 
@@ -307,6 +330,21 @@ class CheckoutController extends Controller
         return hash_equals($expected, $parts['v1']);
     }
 
+    private function testCheckoutEnabled(): bool
+    {
+        return (bool) config('services.payments.test_mode') && $this->isLocalOrTestingEnvironment();
+    }
+
+    private function isLocalOrTestingEnvironment(): bool
+    {
+        return in_array((string) config('app.env'), ['local', 'testing'], true);
+    }
+
+    private function isProductionEnvironment(): bool
+    {
+        return (string) config('app.env') === 'production';
+    }
+
     private function stripeAmountForOrder(Order $order): int
     {
         return (int) round(((float) $order->amount) * 100);
@@ -324,5 +362,12 @@ class CheckoutController extends Controller
         return app()->getLocale() === 'ar'
             ? 'تم استلام الدفع. سيتم فتح الكورس تلقائياً بمجرد وصول تأكيد Stripe webhook.'
             : 'Payment received. The course will unlock automatically as soon as the Stripe webhook confirms it.';
+    }
+
+    private function paymentWebhookConfigurationMessage(): string
+    {
+        return app()->getLocale() === 'ar'
+            ? 'تمت العودة من Stripe، لكن لا يمكن إكمال الطلب من رابط النجاح في بيئة الإنتاج. سيبقى الطلب معلقاً حتى يتم ضبط Stripe webhook الصحيح.'
+            : 'Stripe returned successfully, but production cannot complete paid orders from the success URL. The order will stay pending until a valid Stripe webhook is configured.';
     }
 }

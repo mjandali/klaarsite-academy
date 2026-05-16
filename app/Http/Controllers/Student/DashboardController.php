@@ -3,19 +3,24 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
+use App\Models\Lesson;
 use App\Models\LessonProgress;
 use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(): InertiaResponse
     {
         $user = auth()->user();
         $enrollments = $user->enrollments()
-            ->with(['course' => fn ($query) => $query->withCount(['sections', 'lessons'])])
+            ->with(['course' => fn ($query) => $query->withCount([
+                'sections',
+                'lessons' => fn ($lessonQuery) => $lessonQuery->published(),
+            ])])
             ->latest()
             ->paginate(10)
-            ->through(fn ($enrollment) => $this->withContinueUrl($enrollment, $user->id));
+            ->through(fn ($enrollment) => $this->withContinueContext($enrollment, $user->id));
 
         return Inertia::render('Student/Dashboard', [
             'enrollments' => $enrollments,
@@ -27,19 +32,22 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function myCourses()
+    public function myCourses(): InertiaResponse
     {
         $user = auth()->user();
         $courses = $user->enrollments()
-            ->with(['course' => fn ($query) => $query->withCount(['sections', 'lessons'])])
+            ->with(['course' => fn ($query) => $query->withCount([
+                'sections',
+                'lessons' => fn ($lessonQuery) => $lessonQuery->published(),
+            ])])
             ->latest()
             ->paginate(12)
-            ->through(fn ($enrollment) => $this->withContinueUrl($enrollment, $user->id));
+            ->through(fn ($enrollment) => $this->withContinueContext($enrollment, $user->id));
 
         return Inertia::render('Student/MyCourses', ['courses' => $courses]);
     }
 
-    public function orders()
+    public function orders(): InertiaResponse
     {
         $user = auth()->user();
         $orders = $user->orders()->with('course')->latest()->paginate(20);
@@ -47,19 +55,38 @@ class DashboardController extends Controller
         return Inertia::render('Student/Orders', ['orders' => $orders]);
     }
 
-    private function withContinueUrl($enrollment, int $userId)
+    private function withContinueContext($enrollment, int $userId)
     {
-        $lastLesson = LessonProgress::query()
-            ->join('lessons', 'lessons.id', '=', 'lesson_progress.lesson_id')
+        $course = $enrollment->course;
+        $lessonIds = Lesson::query()
+            ->select('lessons.id')
             ->join('course_sections', 'course_sections.id', '=', 'lessons.course_section_id')
-            ->where('lesson_progress.user_id', $userId)
-            ->where('course_sections.course_id', $enrollment->course_id)
-            ->latest('lesson_progress.last_accessed_at')
-            ->value('lesson_progress.lesson_id');
+            ->where('course_sections.course_id', $course->id)
+            ->where('lessons.status', 'published')
+            ->orderBy('course_sections.order')
+            ->orderBy('lessons.order')
+            ->pluck('lessons.id');
 
-        $enrollment->continue_url = $lastLesson
-            ? route('student.learn.lesson', [$enrollment->course, $lastLesson])
-            : route('student.learn.course', $enrollment->course);
+        $lastLessonId = $lessonIds->isEmpty()
+            ? null
+            : LessonProgress::query()
+                ->where('lesson_progress.user_id', $userId)
+                ->whereIn('lesson_progress.lesson_id', $lessonIds)
+                ->latest('lesson_progress.last_accessed_at')
+                ->value('lesson_progress.lesson_id');
+
+        $firstLessonId = $lessonIds->first();
+        $isCompleted = (int) $enrollment->progress_percentage >= 100;
+
+        if ($isCompleted || ! $firstLessonId) {
+            $enrollment->continue_url = route('student.learn.course', $course);
+            $enrollment->continue_mode = $isCompleted ? 'review' : 'overview';
+
+            return $enrollment;
+        }
+
+        $enrollment->continue_url = route('student.learn.lesson', [$course, $lastLessonId ?: $firstLessonId]);
+        $enrollment->continue_mode = $lastLessonId ? 'continue' : 'start';
 
         return $enrollment;
     }

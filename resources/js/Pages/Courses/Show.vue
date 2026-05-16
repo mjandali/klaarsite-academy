@@ -56,10 +56,10 @@
 
                 <aside class="surface-card h-fit p-6">
                     <h2 class="mb-5 text-xl font-extrabold">{{ t('courses.curriculum') }}</h2>
-                    <div class="space-y-5">
+                    <div v-if="course.sections.length" class="space-y-5">
                         <div v-for="section in course.sections" :key="section.id">
                             <h3 class="mb-2 font-bold">{{ section.title }}</h3>
-                            <ul class="space-y-2 text-sm text-slate-600">
+                            <ul v-if="section.lessons.length" class="space-y-2 text-sm text-slate-600">
                                 <li
                                     v-for="lesson in section.lessons"
                                     :key="lesson.id"
@@ -72,7 +72,13 @@
                                     </div>
                                 </li>
                             </ul>
+                            <div v-else class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+                                {{ $page.props.locale.current === 'ar' ? 'لا توجد دروس منشورة داخل هذا القسم بعد.' : 'No published lessons are available in this section yet.' }}
+                            </div>
                         </div>
+                    </div>
+                    <div v-else class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                        {{ $page.props.locale.current === 'ar' ? 'لا توجد أقسام منشورة لهذا الكورس بعد.' : 'No published sections are available for this course yet.' }}
                     </div>
                 </aside>
             </div>

@@ -28,7 +28,7 @@ const form = useForm({
     duration_hours: '',
     meta_description: '',
     course_format: 'mixed',
-    is_published: false,
+    status: 'draft',
     thumbnail: null,
 });
 const submit = () => form.post('/admin/courses', { forceFormData: true });

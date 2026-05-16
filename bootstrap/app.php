@@ -4,6 +4,7 @@ use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\IsStudent;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\TrackAnalytics;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -36,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
             SubstituteBindings::class,
             SetLocale::class,
             HandleInertiaRequests::class,
+            TrackAnalytics::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 

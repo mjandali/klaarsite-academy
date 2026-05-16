@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\User;
 use App\Support\VideoEmbedParser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -146,6 +147,182 @@ class AcademyHardeningTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_checkout_test_routes_are_forbidden_in_production_even_if_test_mode_is_enabled(): void
+    {
+        config([
+            'app.env' => 'production',
+            'services.payments.test_mode' => true,
+        ]);
+
+        $student = User::factory()->create([
+            'role' => 'student',
+            'email_verified_at' => now(),
+        ]);
+
+        $course = $this->createCourse([
+            'price' => 149.99,
+        ]);
+
+        $order = Order::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'order_number' => 'KA-PROD-'.Str::upper(Str::random(6)),
+            'amount' => $course->price,
+            'currency' => $course->currency,
+            'status' => 'pending',
+            'payment_method' => 'stripe',
+        ]);
+
+        $this->actingAs($student)
+            ->get(route('checkout.test', $order))
+            ->assertForbidden();
+
+        $this->actingAs($student)
+            ->post(route('checkout.test.complete', $order))
+            ->assertForbidden();
+    }
+
+    public function test_production_success_url_does_not_complete_paid_order_when_webhook_secret_is_missing(): void
+    {
+        app()->setLocale('en');
+
+        config([
+            'app.env' => 'production',
+            'services.stripe.secret' => 'sk_test_production',
+            'services.stripe.webhook_secret' => null,
+        ]);
+
+        $student = User::factory()->create([
+            'role' => 'student',
+            'email_verified_at' => now(),
+        ]);
+
+        $course = $this->createCourse([
+            'price' => 149.99,
+            'currency' => 'USD',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'order_number' => 'KA-PROD-SUCCESS-'.Str::upper(Str::random(6)),
+            'amount' => $course->price,
+            'currency' => $course->currency,
+            'status' => 'pending',
+            'payment_method' => 'stripe',
+        ]);
+
+        $order->payments()->create([
+            'transaction_id' => 'pending_'.$order->order_number,
+            'provider' => 'stripe',
+            'amount' => $order->amount,
+            'currency' => $order->currency,
+            'status' => 'pending',
+        ]);
+
+        Http::fake([
+            'https://api.stripe.com/v1/checkout/sessions/*' => Http::response([
+                'id' => 'cs_prod_pending',
+                'client_reference_id' => (string) $order->id,
+                'payment_status' => 'paid',
+                'amount_total' => 14999,
+                'currency' => 'usd',
+                'metadata' => [
+                    'order_id' => (string) $order->id,
+                    'course_id' => (string) $course->id,
+                ],
+            ], 200),
+        ]);
+
+        $this->actingAs($student)
+            ->get(route('checkout.success', $order).'?session_id=cs_prod_pending')
+            ->assertRedirect(route('student.orders'))
+            ->assertSessionHas('error', fn (string $message) => str_contains($message, 'success URL') && str_contains($message, 'webhook'));
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'pending',
+        ]);
+
+        $this->assertDatabaseMissing('enrollments', [
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+        ]);
+    }
+
+    public function test_local_success_url_can_complete_paid_order_only_when_session_is_valid_and_webhook_secret_is_missing(): void
+    {
+        app()->setLocale('en');
+
+        config([
+            'app.env' => 'local',
+            'services.stripe.secret' => 'sk_test_local',
+            'services.stripe.webhook_secret' => null,
+        ]);
+
+        $student = User::factory()->create([
+            'role' => 'student',
+            'email_verified_at' => now(),
+        ]);
+
+        $course = $this->createCourse([
+            'price' => 149.99,
+            'currency' => 'USD',
+        ]);
+
+        $order = Order::create([
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+            'order_number' => 'KA-LOCAL-SUCCESS-'.Str::upper(Str::random(6)),
+            'amount' => $course->price,
+            'currency' => $course->currency,
+            'status' => 'pending',
+            'payment_method' => 'stripe',
+        ]);
+
+        $order->payments()->create([
+            'transaction_id' => 'pending_'.$order->order_number,
+            'provider' => 'stripe',
+            'amount' => $order->amount,
+            'currency' => $order->currency,
+            'status' => 'pending',
+        ]);
+
+        Http::fake([
+            'https://api.stripe.com/v1/checkout/sessions/*' => Http::response([
+                'id' => 'cs_local_complete',
+                'client_reference_id' => (string) $order->id,
+                'payment_status' => 'paid',
+                'amount_total' => 14999,
+                'currency' => 'usd',
+                'metadata' => [
+                    'order_id' => (string) $order->id,
+                    'course_id' => (string) $course->id,
+                ],
+            ], 200),
+        ]);
+
+        $this->actingAs($student)
+            ->get(route('checkout.success', $order).'?session_id=cs_local_complete')
+            ->assertRedirect(route('student.learn.course', $course));
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'completed',
+        ]);
+
+        $this->assertDatabaseHas('payments', [
+            'order_id' => $order->id,
+            'transaction_id' => 'cs_local_complete',
+            'status' => 'completed',
+        ]);
+
+        $this->assertDatabaseHas('enrollments', [
+            'user_id' => $student->id,
+            'course_id' => $course->id,
+        ]);
+    }
+
     public function test_stripe_webhook_completes_the_order_and_creates_enrollment(): void
     {
         config([
@@ -230,6 +407,33 @@ class AcademyHardeningTest extends TestCase
             'user_id' => $student->id,
             'course_id' => $course->id,
         ]);
+    }
+
+    public function test_unsigned_stripe_webhook_is_rejected_in_production_when_secret_is_missing(): void
+    {
+        config([
+            'app.env' => 'production',
+            'services.stripe.webhook_secret' => null,
+        ]);
+
+        $payload = json_encode([
+            'type' => 'checkout.session.completed',
+            'data' => [
+                'object' => [
+                    'id' => 'cs_test_unsigned',
+                ],
+            ],
+        ], JSON_THROW_ON_ERROR);
+
+        $this->call(
+            'POST',
+            '/stripe/webhook',
+            [],
+            [],
+            [],
+            ['CONTENT_TYPE' => 'application/json'],
+            $payload
+        )->assertStatus(503);
     }
 
     public function test_lesson_completion_updates_progress_percentage(): void

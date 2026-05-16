@@ -12,6 +12,15 @@ class Lesson extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Lesson $lesson): void {
+            $lesson->loadMissing('attachments', 'media');
+            $lesson->attachments->each->delete();
+            $lesson->media->each->delete();
+        });
+    }
+
     protected $fillable = [
         'course_section_id',
         'title',
@@ -62,6 +71,11 @@ class Lesson extends Model
     public function attachments()
     {
         return $this->hasMany(LessonAttachment::class);
+    }
+
+    public function media()
+    {
+        return $this->hasMany(LessonMedia::class);
     }
 
     public function progress()

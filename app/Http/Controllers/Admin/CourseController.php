@@ -57,6 +57,7 @@ class CourseController extends Controller
 
         $course->load([
             'sections.lessons.attachments',
+            'sections.lessons.media',
         ])->loadCount(['sections', 'lessons', 'enrollments']);
 
         return Inertia::render('Admin/Courses/Edit', ['course' => $course]);
@@ -67,8 +68,11 @@ class CourseController extends Controller
         $this->authorize('update', $course);
 
         $data = $this->validatedCourse($request, $course);
-        $data['status'] = $request->input('status', 'draft');
-        $data['published_at'] = $request->input('status') === 'published' ? now() : $course->published_at;
+        $status = $request->input('status', 'draft');
+        $data['status'] = $status;
+        $data['published_at'] = $status === 'published'
+            ? ($course->published_at ?? now())
+            : $course->published_at;
         $data['course_format'] = $data['course_format'] ?? 'mixed';
 
         if ($request->filled('slug')) {
@@ -106,15 +110,7 @@ class CourseController extends Controller
     {
         $this->authorize('update', $course);
 
-        $course->load([
-            'sections' => fn($q) => $q->orderBy('order'),
-            'sections.lessons' => fn($q) => $q->orderBy('order'),
-        ]);
-
-        return Inertia::render('Admin/CourseStructure', [
-            'course' => $course,
-            'sections' => $course->sections,
-        ]);
+        return redirect()->route('admin.courses.edit', $course);
     }
 
     public function reorderSections(Request $request, Course $course)

@@ -12,7 +12,10 @@ class PageController extends Controller
     public function home()
     {
         $featuredCourses = Course::published()
-            ->withCount(['sections', 'lessons'])
+            ->withCount([
+                'sections',
+                'lessons' => fn ($query) => $query->published(),
+            ])
             ->latest()
             ->take(3)
             ->get();

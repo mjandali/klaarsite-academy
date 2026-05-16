@@ -11,6 +11,25 @@ class Course extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::deleting(function (Course $course): void {
+            $course->loadMissing('sections.lessons.attachments', 'sections.lessons.media');
+
+            $course->sections
+                ->flatMap(fn ($section) => $section->lessons)
+                ->flatMap(fn ($lesson) => $lesson->attachments)
+                ->each
+                ->delete();
+
+            $course->sections
+                ->flatMap(fn ($section) => $section->lessons)
+                ->flatMap(fn ($lesson) => $lesson->media)
+                ->each
+                ->delete();
+        });
+    }
+
     protected $fillable = [
         'user_id',
         'title',

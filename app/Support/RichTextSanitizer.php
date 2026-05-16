@@ -18,6 +18,8 @@ class RichTextSanitizer
         'code',
         'div',
         'em',
+        'figcaption',
+        'figure',
         'h1',
         'h2',
         'h3',
@@ -25,6 +27,7 @@ class RichTextSanitizer
         'h5',
         'h6',
         'hr',
+        'img',
         'i',
         'li',
         'ol',
@@ -67,19 +70,23 @@ class RichTextSanitizer
         }
 
         if (! class_exists(DOMDocument::class)) {
-            return strip_tags($html, '<a><blockquote><br><code><div><em><h1><h2><h3><h4><h5><h6><hr><i><li><ol><p><pre><span><strong><u><ul>');
+            return self::escapeHtml($html);
         }
 
         $document = new DOMDocument('1.0', 'UTF-8');
         $previousState = libxml_use_internal_errors(true);
 
-        $document->loadHTML(
+        $loaded = $document->loadHTML(
             '<?xml encoding="utf-8" ?><div>'.$html.'</div>',
             LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
         );
 
         libxml_clear_errors();
         libxml_use_internal_errors($previousState);
+
+        if (! $loaded) {
+            return self::escapeHtml($html);
+        }
 
         /** @var DOMElement|null $root */
         $root = $document->documentElement;
@@ -141,6 +148,8 @@ class RichTextSanitizer
     private static function sanitizeAttributes(DOMElement $element, string $tag): void
     {
         $href = $tag === 'a' ? trim((string) $element->getAttribute('href')) : '';
+        $src = $tag === 'img' ? trim((string) $element->getAttribute('src')) : '';
+        $alt = $tag === 'img' ? trim((string) $element->getAttribute('alt')) : '';
 
         if (! $element->hasAttributes()) {
             if ($tag === 'a' && $href !== '' && self::isSafeUrl($href)) {
@@ -150,6 +159,11 @@ class RichTextSanitizer
                     $element->setAttribute('target', '_blank');
                     $element->setAttribute('rel', 'noopener noreferrer nofollow');
                 }
+            }
+
+            if ($tag === 'img' && $src !== '' && self::isSafeImageUrl($src)) {
+                $element->setAttribute('src', $src);
+                $element->setAttribute('alt', $alt);
             }
 
             return;
@@ -163,6 +177,19 @@ class RichTextSanitizer
 
         foreach ($attributesToRemove as $attributeName) {
             $element->removeAttribute($attributeName);
+        }
+
+        if ($tag === 'img') {
+            if ($src === '' || ! self::isSafeImageUrl($src)) {
+                $element->parentNode?->removeChild($element);
+
+                return;
+            }
+
+            $element->setAttribute('src', $src);
+            $element->setAttribute('alt', $alt);
+
+            return;
         }
 
         if ($tag !== 'a') {
@@ -187,6 +214,10 @@ class RichTextSanitizer
     {
         $lower = strtolower($url);
 
+        if (str_starts_with($url, '//')) {
+            return false;
+        }
+
         if (str_starts_with($lower, 'javascript:')
             || str_starts_with($lower, 'data:')
             || str_starts_with($lower, 'vbscript:')
@@ -206,6 +237,18 @@ class RichTextSanitizer
         }
 
         return ! preg_match('/^[a-z][a-z0-9+\-.]*:/i', $url);
+    }
+
+    private static function isSafeImageUrl(string $url): bool
+    {
+        return str_starts_with($url, '/lesson-media/');
+    }
+
+    private static function escapeHtml(string $html): ?string
+    {
+        $escaped = htmlspecialchars($html, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
+        return trim($escaped) !== '' ? $escaped : null;
     }
 
     private static function unwrap(DOMElement $element): void

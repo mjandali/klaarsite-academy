@@ -12,7 +12,10 @@ class CourseController extends Controller
     {
         $courses = Course::published()
             ->with('user:id,name')
-            ->withCount(['sections', 'lessons'])
+            ->withCount([
+                'sections',
+                'lessons' => fn ($query) => $query->published(),
+            ])
             ->latest()
             ->paginate(12)
             ->withQueryString();
@@ -33,7 +36,10 @@ class CourseController extends Controller
         $course->load([
             'user:id,name',
             'sections.lessons' => fn ($query) => $query->published()->orderBy('order'),
-        ])->loadCount(['sections', 'lessons']);
+        ])->loadCount([
+            'sections',
+            'lessons' => fn ($query) => $query->published(),
+        ]);
 
         $isEnrolled = false;
         if (auth()->check()) {

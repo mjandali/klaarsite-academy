@@ -22,7 +22,7 @@ class CourseSeeder extends Seeder
                 'level' => 'beginner',
                 'duration_hours' => 20,
                 'course_format' => 'mixed',
-                'is_published' => true,
+                'status' => 'published',
             ],
             [
                 'title' => 'Vue 3 Fundamentals',
@@ -32,7 +32,7 @@ class CourseSeeder extends Seeder
                 'level' => 'beginner',
                 'duration_hours' => 15,
                 'course_format' => 'video',
-                'is_published' => true,
+                'status' => 'published',
             ],
             [
                 'title' => 'Advanced PHP',
@@ -42,7 +42,7 @@ class CourseSeeder extends Seeder
                 'level' => 'intermediate',
                 'duration_hours' => 25,
                 'course_format' => 'text',
-                'is_published' => true,
+                'status' => 'published',
             ],
         ];
 
@@ -56,8 +56,8 @@ class CourseSeeder extends Seeder
                 'level' => $courseData['level'],
                 'duration_hours' => $courseData['duration_hours'],
                 'course_format' => $courseData['course_format'],
-                'status' => $courseData['is_published'] ? 'published' : 'draft',
-                'published_at' => $courseData['is_published'] ? now() : null,
+                'status' => $courseData['status'],
+                'published_at' => $courseData['status'] === 'published' ? now() : null,
                 'slug' => Str::slug($courseData['title']),
             ]);
 
