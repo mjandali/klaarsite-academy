@@ -40,6 +40,20 @@
                         >
                             {{ t('nav.dashboard') }}
                         </Link>
+                        <Link
+                            v-if="$page.props.auth.user?.role === 'student'"
+                            href="/dashboard/my-courses"
+                            class="text-slate-700 transition hover:text-blue-700"
+                        >
+                            {{ t('nav.my_courses') }}
+                        </Link>
+                        <Link
+                            v-if="$page.props.auth.user"
+                            href="/dashboard/profile"
+                            class="text-slate-700 transition hover:text-blue-700"
+                        >
+                            {{ t('nav.profile') }}
+                        </Link>
                         <Link v-else href="/login" class="font-bold text-blue-700 transition hover:text-blue-800">
                             {{ t('nav.login') }}
                         </Link>
@@ -79,6 +93,22 @@
                         {{ t('nav.dashboard') }}
                     </Link>
                     <Link
+                        v-if="$page.props.auth.user?.role === 'student'"
+                        href="/dashboard/my-courses"
+                        class="rounded-xl px-3 py-2 text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                        @click="isMenuOpen = false"
+                    >
+                        {{ t('nav.my_courses') }}
+                    </Link>
+                    <Link
+                        v-if="$page.props.auth.user"
+                        href="/dashboard/profile"
+                        class="rounded-xl px-3 py-2 text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                        @click="isMenuOpen = false"
+                    >
+                        {{ t('nav.profile') }}
+                    </Link>
+                    <Link
                         v-else
                         href="/login"
                         class="rounded-xl px-3 py-2 font-bold text-blue-700 transition hover:bg-blue-50 hover:text-blue-800"
@@ -97,7 +127,7 @@
             </nav>
         </header>
 
-        <FlashMessages />
+        <AppFlashToaster />
 
         <main>
             <slot />
@@ -144,7 +174,7 @@
 import { computed, ref } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { useTranslations } from '@/Composables/useTranslations';
-import FlashMessages from '@/Components/FlashMessages.vue';
+import AppFlashToaster from '@/Components/AppFlashToaster.vue';
 
 const page = usePage();
 const isMenuOpen = ref(false);

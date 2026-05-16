@@ -4,7 +4,7 @@ return [
     'site_name' => 'Klaarsite Academy',
     'nav' => [
         'home' => 'Home', 'courses' => 'Courses', 'about' => 'About', 'contact' => 'Contact',
-        'dashboard' => 'Dashboard', 'login' => 'Login', 'register' => 'Register', 'logout' => 'Logout',
+        'dashboard' => 'Dashboard', 'login' => 'Login', 'register' => 'Register', 'logout' => 'Logout', 'profile' => 'Profile',
         'my_courses' => 'My Courses', 'browse' => 'Browse', 'orders' => 'Orders', 'students' => 'Students', 'settings' => 'Settings',
         'admin' => 'Admin', 'view_site' => 'View Site', 'privacy' => 'Privacy', 'terms' => 'Terms'
     ],

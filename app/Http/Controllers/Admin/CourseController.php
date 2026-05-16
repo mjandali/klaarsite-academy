@@ -106,38 +106,6 @@ class CourseController extends Controller
         return redirect()->route('admin.courses.index')->with('success', __('app.admin.course_deleted'));
     }
 
-    public function structure(Course $course)
-    {
-        $this->authorize('update', $course);
-
-        return redirect()->route('admin.courses.edit', $course);
-    }
-
-    public function reorderSections(Request $request, Course $course)
-    {
-        $this->authorize('update', $course);
-
-        $request->validate([
-            'sections' => 'required|array',
-            'sections.*.id' => 'required|exists:course_sections,id',
-            'sections.*.lessons' => 'required|array',
-            'sections.*.lessons.*.id' => 'required|exists:lessons,id',
-        ]);
-
-        foreach ($request->sections as $sectionIndex => $sectionData) {
-            $course->sections()
-                ->where('id', $sectionData['id'])
-                ->update(['order' => $sectionIndex + 1]);
-
-            foreach ($sectionData['lessons'] as $lessonIndex => $lessonData) {
-                \App\Models\Lesson::where('id', $lessonData['id'])
-                    ->update(['order' => $lessonIndex + 1]);
-            }
-        }
-
-        return response()->json(['success' => true]);
-    }
-
     private function validatedCourse(Request $request, ?Course $course = null): array
     {
         return $request->validate([

@@ -50,6 +50,7 @@ class LessonMediaController extends Controller
             'original_name' => $media->original_name,
             'width' => $media->width,
             'height' => $media->height,
+            'alt_text' => $media->alt_text,
         ], 201);
     }
 }

@@ -7,6 +7,7 @@
 
                     <div class="hidden items-center gap-4 text-sm md:flex md:text-base">
                         <Link href="/" class="text-blue-100 transition hover:text-white">{{ t('nav.view_site') }}</Link>
+                        <Link href="/dashboard/profile" class="text-blue-100 transition hover:text-white">{{ t('nav.profile') }}</Link>
                         <Link :href="languageUrl" class="text-blue-100 transition hover:text-white">
                             {{ $page.props.locale.current === 'ar' ? 'English' : 'العربية' }}
                         </Link>
@@ -34,6 +35,7 @@
 
                 <div class="mt-4 flex flex-wrap items-center gap-3 text-sm text-blue-100 md:hidden">
                     <Link href="/" class="transition hover:text-white">{{ t('nav.view_site') }}</Link>
+                    <Link href="/dashboard/profile" class="transition hover:text-white">{{ t('nav.profile') }}</Link>
                     <Link :href="languageUrl" class="transition hover:text-white">
                         {{ $page.props.locale.current === 'ar' ? 'English' : 'العربية' }}
                     </Link>
@@ -45,7 +47,7 @@
             </nav>
         </header>
 
-        <FlashMessages />
+        <AppFlashToaster />
 
         <div class="lg:flex">
             <aside
@@ -72,7 +74,7 @@
 import { computed, ref } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useTranslations } from '@/Composables/useTranslations';
-import FlashMessages from '@/Components/FlashMessages.vue';
+import AppFlashToaster from '@/Components/AppFlashToaster.vue';
 
 const page = usePage();
 const isSidebarOpen = ref(false);

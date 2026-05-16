@@ -57,6 +57,22 @@ class RichTextSanitizer
         'textarea',
     ];
 
+    /**
+     * @var array<int, string>
+     */
+    private const ALLOWED_MEDIA_CLASSES = [
+        'media-block',
+        'media-center',
+        'media-start',
+        'media-end',
+        'media-w-25',
+        'media-w-33',
+        'media-w-50',
+        'media-w-66',
+        'media-w-100',
+        'media-wrap',
+    ];
+
     public static function sanitize(?string $html): ?string
     {
         if ($html === null) {
@@ -150,6 +166,9 @@ class RichTextSanitizer
         $href = $tag === 'a' ? trim((string) $element->getAttribute('href')) : '';
         $src = $tag === 'img' ? trim((string) $element->getAttribute('src')) : '';
         $alt = $tag === 'img' ? trim((string) $element->getAttribute('alt')) : '';
+        $classes = in_array($tag, ['figure', 'img'], true)
+            ? self::sanitizeClasses((string) $element->getAttribute('class'))
+            : [];
 
         if (! $element->hasAttributes()) {
             if ($tag === 'a' && $href !== '' && self::isSafeUrl($href)) {
@@ -164,6 +183,14 @@ class RichTextSanitizer
             if ($tag === 'img' && $src !== '' && self::isSafeImageUrl($src)) {
                 $element->setAttribute('src', $src);
                 $element->setAttribute('alt', $alt);
+
+                if ($classes !== []) {
+                    $element->setAttribute('class', implode(' ', $classes));
+                }
+            }
+
+            if ($tag === 'figure' && $classes !== []) {
+                $element->setAttribute('class', implode(' ', $classes));
             }
 
             return;
@@ -188,6 +215,18 @@ class RichTextSanitizer
 
             $element->setAttribute('src', $src);
             $element->setAttribute('alt', $alt);
+
+            if ($classes !== []) {
+                $element->setAttribute('class', implode(' ', $classes));
+            }
+
+            return;
+        }
+
+        if ($tag === 'figure') {
+            if ($classes !== []) {
+                $element->setAttribute('class', implode(' ', $classes));
+            }
 
             return;
         }
@@ -242,6 +281,23 @@ class RichTextSanitizer
     private static function isSafeImageUrl(string $url): bool
     {
         return str_starts_with($url, '/lesson-media/');
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private static function sanitizeClasses(string $classList): array
+    {
+        $tokens = preg_split('/\s+/', trim($classList)) ?: [];
+        $safe = [];
+
+        foreach ($tokens as $token) {
+            if ($token !== '' && in_array($token, self::ALLOWED_MEDIA_CLASSES, true) && ! in_array($token, $safe, true)) {
+                $safe[] = $token;
+            }
+        }
+
+        return $safe;
     }
 
     private static function escapeHtml(string $html): ?string

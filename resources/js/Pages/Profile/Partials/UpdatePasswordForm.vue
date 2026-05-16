@@ -1,11 +1,15 @@
 <script setup>
+import { computed, ref } from 'vue';
+import { useForm, usePage } from '@inertiajs/vue3';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import { useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { useToast } from '@/Composables/useToast';
 
+const page = usePage();
+const isArabic = computed(() => page.props.locale.current === 'ar');
+const toaster = useToast();
 const passwordInput = ref(null);
 const currentPasswordInput = ref(null);
 
@@ -18,12 +22,16 @@ const form = useForm({
 const updatePassword = () => {
     form.put(route('password.update'), {
         preserveScroll: true,
-        onSuccess: () => form.reset(),
+        onSuccess: () => {
+            form.reset();
+            toaster.success(isArabic.value ? 'تم تحديث كلمة المرور.' : 'Password updated successfully.');
+        },
         onError: () => {
             if (form.errors.password) {
                 form.reset('password', 'password_confirmation');
                 passwordInput.value.focus();
             }
+
             if (form.errors.current_password) {
                 form.reset('current_password');
                 currentPasswordInput.value.focus();
@@ -36,16 +44,16 @@ const updatePassword = () => {
 <template>
     <section>
         <header>
-            <h2 class="text-lg font-medium text-gray-900">Update Password</h2>
+            <h2 class="text-xl font-extrabold text-slate-900">{{ isArabic ? 'تحديث كلمة المرور' : 'Update Password' }}</h2>
 
-            <p class="mt-1 text-sm text-gray-600">
-                Ensure your account is using a long, random password to stay secure.
+            <p class="mt-2 text-sm leading-7 text-slate-600">
+                {{ isArabic ? 'استخدم كلمة مرور قوية وطويلة للحفاظ على أمان حسابك.' : 'Use a strong, long password to keep your account secure.' }}
             </p>
         </header>
 
-        <form @submit.prevent="updatePassword" class="mt-6 space-y-6">
+        <form class="mt-6 space-y-6" @submit.prevent="updatePassword">
             <div>
-                <InputLabel for="current_password" value="Current Password" />
+                <InputLabel for="current_password" :value="isArabic ? 'كلمة المرور الحالية' : 'Current Password'" />
 
                 <TextInput
                     id="current_password"
@@ -60,7 +68,7 @@ const updatePassword = () => {
             </div>
 
             <div>
-                <InputLabel for="password" value="New Password" />
+                <InputLabel for="password" :value="isArabic ? 'كلمة المرور الجديدة' : 'New Password'" />
 
                 <TextInput
                     id="password"
@@ -75,7 +83,7 @@ const updatePassword = () => {
             </div>
 
             <div>
-                <InputLabel for="password_confirmation" value="Confirm Password" />
+                <InputLabel for="password_confirmation" :value="isArabic ? 'تأكيد كلمة المرور' : 'Confirm Password'" />
 
                 <TextInput
                     id="password_confirmation"
@@ -89,11 +97,7 @@ const updatePassword = () => {
             </div>
 
             <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
-
-                <Transition enter-from-class="opacity-0" leave-to-class="opacity-0" class="transition ease-in-out">
-                    <p v-if="form.recentlySuccessful" class="text-sm text-gray-600">Saved.</p>
-                </Transition>
+                <PrimaryButton :disabled="form.processing">{{ isArabic ? 'حفظ كلمة المرور' : 'Save Password' }}</PrimaryButton>
             </div>
         </form>
     </section>

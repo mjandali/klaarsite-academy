@@ -108,6 +108,7 @@
 .prose-content figure,
 .lesson-prose figure {
     margin: 1.5rem 0;
+    clear: both;
 }
 
 .prose-content img,
@@ -119,6 +120,72 @@
     border-radius: 1rem;
     margin: 1rem 0;
     box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+.prose-content figure.media-center,
+.lesson-prose figure.media-center {
+    margin-inline: auto;
+}
+
+.prose-content figure.media-start,
+.lesson-prose figure.media-start {
+    margin-inline-end: auto;
+}
+
+.prose-content figure.media-end,
+.lesson-prose figure.media-end {
+    margin-inline-start: auto;
+}
+
+.prose-content figure.media-w-25,
+.lesson-prose figure.media-w-25 {
+    width: 25%;
+}
+
+.prose-content figure.media-w-33,
+.lesson-prose figure.media-w-33 {
+    width: 33.333333%;
+}
+
+.prose-content figure.media-w-50,
+.lesson-prose figure.media-w-50 {
+    width: 50%;
+}
+
+.prose-content figure.media-w-66,
+.lesson-prose figure.media-w-66 {
+    width: 66.666667%;
+}
+
+.prose-content figure.media-w-100,
+.lesson-prose figure.media-w-100,
+.prose-content figure.media-block,
+.lesson-prose figure.media-block {
+    width: 100%;
+}
+
+.prose-content figure.media-wrap.media-start,
+.lesson-prose figure.media-wrap.media-start {
+    float: left;
+    margin: 0 1.5rem 1rem 0;
+}
+
+.prose-content figure.media-wrap.media-end,
+.lesson-prose figure.media-wrap.media-end {
+    float: right;
+    margin: 0 0 1rem 1.5rem;
+}
+
+html[dir='rtl'] .prose-content figure.media-wrap.media-start,
+html[dir='rtl'] .lesson-prose figure.media-wrap.media-start {
+    float: right;
+    margin: 0 0 1rem 1.5rem;
+}
+
+html[dir='rtl'] .prose-content figure.media-wrap.media-end,
+html[dir='rtl'] .lesson-prose figure.media-wrap.media-end {
+    float: left;
+    margin: 0 1.5rem 1rem 0;
 }
 
 .prose-content figcaption,
@@ -155,4 +222,38 @@
     background: transparent;
     padding: 0;
     color: inherit;
+}
+
+.Toastify__toast-container {
+    font-family: inherit;
+}
+
+.Toastify__toast {
+    border-radius: 1rem;
+}
+
+html[dir='rtl'] .swal2-popup {
+    direction: rtl;
+    text-align: right;
+}
+
+html[dir='ltr'] .swal2-popup {
+    direction: ltr;
+    text-align: left;
+}
+
+.swal2-popup {
+    border-radius: 1.25rem;
+    font-family: inherit;
+}
+
+@media (max-width: 1279px) {
+    .prose-content figure.media-start,
+    .prose-content figure.media-end,
+    .lesson-prose figure.media-start,
+    .lesson-prose figure.media-end {
+        width: 100%;
+        float: none;
+        margin: 1.5rem 0;
+    }
 }

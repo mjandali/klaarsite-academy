@@ -54,18 +54,32 @@ class RichTextSanitizerTest extends TestCase
         $this->assertStringNotContainsString('data:image', $sanitized);
     }
 
+    public function test_it_keeps_only_allowed_internal_media_layout_classes(): void
+    {
+        $sanitized = RichTextSanitizer::sanitize(
+            '<figure class="media-start media-w-33 media-wrap arbitrary-class"><img class="media-center media-w-33 media-wrap nope" src="/lesson-media/42" alt="Diagram"></figure>'
+        );
+
+        $this->assertStringContainsString('<figure class="media-start media-w-33 media-wrap">', $sanitized);
+        $this->assertStringContainsString('<img src="/lesson-media/42" alt="Diagram" class="media-center media-w-33 media-wrap">', $sanitized);
+        $this->assertStringNotContainsString('arbitrary-class', $sanitized);
+        $this->assertStringNotContainsString('nope', $sanitized);
+    }
+
     public function test_it_allows_internal_lesson_media_images_and_figures(): void
     {
         $sanitized = RichTextSanitizer::sanitize(
-            '<figure style="padding:1rem"><img src="/lesson-media/42" alt="Diagram" onerror="alert(1)" srcset="/lesson-media/99 2x"><figcaption onclick="evil()">Example caption</figcaption></figure>'
+            '<figure class="media-center media-w-50 arbitrary-class" style="padding:1rem"><img class="media-w-25 evil-class" src="/lesson-media/42" alt="Diagram" onerror="alert(1)" srcset="/lesson-media/99 2x"><figcaption onclick="evil()">Example caption</figcaption></figure>'
         );
 
-        $this->assertStringContainsString('<figure>', $sanitized);
-        $this->assertStringContainsString('<img src="/lesson-media/42" alt="Diagram">', $sanitized);
+        $this->assertStringContainsString('<figure class="media-center media-w-50">', $sanitized);
+        $this->assertStringContainsString('<img src="/lesson-media/42" alt="Diagram" class="media-w-25">', $sanitized);
         $this->assertStringContainsString('<figcaption>Example caption</figcaption>', $sanitized);
         $this->assertStringNotContainsString('style=', $sanitized);
         $this->assertStringNotContainsString('onerror=', $sanitized);
         $this->assertStringNotContainsString('onclick=', $sanitized);
         $this->assertStringNotContainsString('srcset=', $sanitized);
+        $this->assertStringNotContainsString('arbitrary-class', $sanitized);
+        $this->assertStringNotContainsString('evil-class', $sanitized);
     }
 }

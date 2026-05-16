@@ -21,9 +21,11 @@ return new class extends Migration
             $table->enum('type', ['video', 'text', 'mixed'])->default('text');
             $table->longText('content')->nullable();
             $table->string('video_url')->nullable();
+            $table->enum('video_provider', ['youtube', 'vimeo'])->nullable();
+            $table->string('video_id', 32)->nullable();
             $table->integer('duration_minutes')->default(0);
             $table->integer('order')->default(0);
-            $table->boolean('is_published')->default(false);
+            $table->enum('status', ['draft', 'published'])->default('draft');
             $table->timestamps();
         });
     }

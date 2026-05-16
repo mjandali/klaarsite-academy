@@ -4,7 +4,7 @@
             <div>
                 <h3 class="text-xl font-extrabold">{{ title }}</h3>
                 <p class="mt-1 text-sm text-slate-500">
-                    {{ isArabic ? 'أنشئ درساً كتابياً أو مرئياً أو مختلطاً مع دعم المعاينة والمرفقات والصور الداخلية.' : 'Create text, video, or mixed lessons with preview support, attachments, and internal lesson images.' }}
+                    {{ isArabic ? 'أنشئ درسًا كتابيًا أو مرئيًا أو مختلطًا مع دعم المعاينة والمرفقات والصور الداخلية.' : 'Create text, video, or mixed lessons with preview support, attachments, and internal lesson images.' }}
                 </p>
             </div>
             <div class="rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide" :class="statusBadgeClass">
@@ -16,7 +16,7 @@
             <div>
                 <label class="mb-2 block font-bold">{{ isArabic ? 'القسم' : 'Section' }}</label>
                 <select v-model="form.course_section_id" class="w-full rounded-lg border-slate-300">
-                    <option disabled value="">{{ isArabic ? 'اختر قسماً' : 'Choose a section' }}</option>
+                    <option disabled value="">{{ isArabic ? 'اختر قسمًا' : 'Choose a section' }}</option>
                     <option v-for="section in sections" :key="section.id" :value="section.id">{{ section.title }}</option>
                 </select>
                 <p v-if="form.errors.course_section_id" class="mt-1 text-sm text-red-600">{{ form.errors.course_section_id }}</p>
@@ -99,7 +99,6 @@
             <p class="mt-1 text-xs text-slate-500">
                 {{ isArabic ? 'إذا كان الرابط غير مدعوم فسيظهر لك الخطأ هنا قبل الحفظ وبعده.' : 'Unsupported providers are rejected with a clear error before and after save.' }}
             </p>
-            <p v-if="videoMessage && !videoError" class="mt-2 text-sm text-emerald-600">{{ videoMessage }}</p>
             <p v-if="videoError" class="mt-2 text-sm text-red-600">{{ videoError }}</p>
             <p v-if="form.errors.video_url" class="mt-2 text-sm text-red-600">{{ form.errors.video_url }}</p>
 
@@ -110,7 +109,7 @@
             </div>
         </div>
 
-        <div class="space-y-3">
+        <div class="space-y-4">
             <div class="flex items-center justify-between gap-3">
                 <div>
                     <h4 class="text-lg font-extrabold">
@@ -121,20 +120,47 @@
                         }}
                     </h4>
                     <p class="mt-1 text-sm text-slate-500">
-                        {{ isArabic ? 'مسموح: العناوين، القوائم، الروابط، الاقتباسات، وكتل الأكواد. كما يمكن إدراج صور الدرس الداخلية بشكل آمن.' : 'Supports headings, lists, links, blockquotes, code blocks, and safe internal lesson images.' }}
+                        {{ isArabic ? 'استخدم الشريط السريع للعناوين والقوائم والروابط والاقتباسات وكتل الأكواد والصور الداخلية.' : 'Use the quick toolbar for headings, lists, links, blockquotes, code blocks, and internal lesson images.' }}
                     </p>
                 </div>
                 <div class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                    {{ isArabic ? 'الترتيب عبر الأسهم' : 'Ordered with arrows' }}
+                    {{ isArabic ? 'محتوى آمن ومعقّم' : 'Sanitized content' }}
                 </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                <button type="button" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100" @click="insertHeading(2)">
+                    {{ isArabic ? 'عنوان H2' : 'Heading H2' }}
+                </button>
+                <button type="button" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100" @click="insertHeading(3)">
+                    {{ isArabic ? 'عنوان H3' : 'Heading H3' }}
+                </button>
+                <button type="button" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100" @click="insertParagraph()">
+                    {{ isArabic ? 'فقرة' : 'Paragraph' }}
+                </button>
+                <button type="button" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100" @click="insertList(false)">
+                    {{ isArabic ? 'قائمة نقطية' : 'Bullet List' }}
+                </button>
+                <button type="button" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100" @click="insertList(true)">
+                    {{ isArabic ? 'قائمة رقمية' : 'Numbered List' }}
+                </button>
+                <button type="button" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100" @click="insertLink()">
+                    {{ isArabic ? 'رابط' : 'Link' }}
+                </button>
+                <button type="button" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100" @click="insertBlockquote()">
+                    {{ isArabic ? 'اقتباس' : 'Blockquote' }}
+                </button>
+                <button type="button" class="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100" @click="insertCodeBlock()">
+                    {{ isArabic ? 'كتلة كود' : 'Code Block' }}
+                </button>
             </div>
 
             <textarea
                 ref="contentEditor"
                 v-model="form.content"
-                rows="12"
+                rows="14"
                 class="w-full rounded-2xl border-slate-300 font-mono text-sm"
-                placeholder="<h2>Lesson Title</h2>&#10;<p>Your content here...</p>&#10;<figure><img src=&quot;/lesson-media/1&quot; alt=&quot;&quot;><figcaption></figcaption></figure>&#10;<pre><code>code example</code></pre>"
+                placeholder="<h2>Lesson Title</h2>&#10;<p>Your content here...</p>&#10;<figure class=&quot;media-center media-w-50&quot;><img src=&quot;/lesson-media/1&quot; alt=&quot;&quot;><figcaption></figcaption></figure>&#10;<pre><code>// code example</code></pre>"
             ></textarea>
             <p v-if="form.errors.content" class="text-sm text-red-600">{{ form.errors.content }}</p>
         </div>
@@ -153,13 +179,19 @@
             </div>
 
             <div v-if="lessonId" class="mt-4 space-y-4">
-                <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+                <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,240px)_auto]">
                     <input
                         ref="mediaInput"
                         type="file"
                         accept=".jpg,.jpeg,.png,.webp"
                         class="w-full rounded-lg border border-slate-300 p-2"
                         @change="handleMediaSelection"
+                    />
+                    <input
+                        v-model="uploadAltText"
+                        type="text"
+                        class="w-full rounded-lg border-slate-300"
+                        :placeholder="isArabic ? 'نص بديل افتراضي للصورة' : 'Default alt text for this image'"
                     />
                     <button
                         type="button"
@@ -171,16 +203,63 @@
                     </button>
                 </div>
 
-                <p v-if="mediaMessage && !mediaError" class="text-sm text-emerald-600">{{ mediaMessage }}</p>
                 <p v-if="mediaError" class="text-sm text-red-600">{{ mediaError }}</p>
 
-                <div v-if="mediaItems.length" class="grid gap-4 md:grid-cols-2">
+                <div v-if="mediaItems.length" class="grid gap-4 xl:grid-cols-2">
                     <article v-for="item in mediaItems" :key="item.id" class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
-                        <img :src="item.display_url" :alt="item.alt_text || ''" class="h-48 w-full object-cover" />
-                        <div class="space-y-3 p-4">
+                        <img :src="item.display_url" :alt="draftFor(item).altText || ''" class="h-48 w-full object-cover" />
+                        <div class="space-y-4 p-4">
                             <div>
                                 <p class="truncate font-bold text-slate-800">{{ item.original_name }}</p>
                                 <p class="text-xs text-slate-500">{{ item.width || 0 }} × {{ item.height || 0 }}</p>
+                            </div>
+
+                            <div class="grid gap-4 md:grid-cols-2">
+                                <div class="md:col-span-2">
+                                    <label class="mb-2 block text-sm font-bold">{{ isArabic ? 'النص البديل' : 'Alt text' }}</label>
+                                    <input v-model="draftFor(item).altText" type="text" class="w-full rounded-lg border-slate-300" />
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <label class="mb-2 block text-sm font-bold">{{ isArabic ? 'التعليق التوضيحي' : 'Caption' }}</label>
+                                    <input v-model="draftFor(item).caption" type="text" class="w-full rounded-lg border-slate-300" />
+                                </div>
+
+                                <div>
+                                    <label class="mb-2 block text-sm font-bold">{{ isArabic ? 'تموضع الصورة' : 'Image layout' }}</label>
+                                    <select v-model="draftFor(item).position" class="w-full rounded-lg border-slate-300">
+                                        <option value="full">{{ isArabic ? 'عرض كامل' : 'Full width' }}</option>
+                                        <option value="center">{{ isArabic ? 'وسط الصفحة' : 'Centered' }}</option>
+                                        <option value="start">{{ isArabic ? 'بداية السطر' : 'Start side' }}</option>
+                                        <option value="end">{{ isArabic ? 'نهاية السطر' : 'End side' }}</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="mb-2 block text-sm font-bold">{{ isArabic ? 'العرض' : 'Width' }}</label>
+                                    <select v-model="draftFor(item).width" class="w-full rounded-lg border-slate-300" :disabled="draftFor(item).position === 'full'">
+                                        <option value="25">25%</option>
+                                        <option value="33">33%</option>
+                                        <option value="50">50%</option>
+                                        <option value="66">66%</option>
+                                        <option value="100">100%</option>
+                                    </select>
+                                </div>
+
+                                <label class="md:col-span-2 flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                                    <input
+                                        v-model="draftFor(item).wrap"
+                                        type="checkbox"
+                                        class="rounded border-slate-300"
+                                        :disabled="!['start', 'end'].includes(draftFor(item).position)"
+                                    />
+                                    <span>{{ isArabic ? 'اجعل النص يلتف حول الصورة' : 'Wrap text around the image' }}</span>
+                                </label>
+                            </div>
+
+                            <div class="rounded-2xl border border-dashed border-slate-300 bg-white p-3">
+                                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ isArabic ? 'الفئات الآمنة' : 'Safe classes' }}</p>
+                                <p class="mt-2 break-all font-mono text-xs text-slate-700">{{ mediaClassString(item) }}</p>
                             </div>
 
                             <div class="flex flex-wrap gap-2">
@@ -205,28 +284,32 @@
             </div>
 
             <div v-else class="mt-4 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-5 text-sm leading-7 text-slate-500">
-                {{ isArabic ? 'يمكنك رفع صور الدرس بعد إنشاء الدرس لأول مرة. احفظ الدرس ثم افتحه للتعديل وسيظهر قسم الرفع هنا.' : 'You can upload lesson images after creating the lesson for the first time. Save the lesson, reopen it for editing, and the upload section will be available here.' }}
+                {{ isArabic ? 'احفظ الدرس أولاً حتى تتمكن من رفع الصور وربطها داخله بشكل آمن.' : 'Save the lesson first so you can upload images and insert them safely into the content.' }}
             </div>
         </div>
 
         <div class="rounded-2xl border border-slate-200 p-5">
-            <h4 class="text-lg font-extrabold">{{ isArabic ? 'مرفقات الدرس' : 'Lesson Attachments' }}</h4>
-            <p class="mt-1 text-sm text-slate-500">
-                {{ isArabic ? 'الأنواع المسموحة: PDF, ZIP, TXT, MD, DOC, DOCX, XLSX, PNG, JPG, WEBP.' : 'Allowed types: PDF, ZIP, TXT, MD, DOC, DOCX, XLSX, PNG, JPG, WEBP.' }}
-            </p>
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h4 class="text-lg font-extrabold">{{ isArabic ? 'مرفقات الدرس' : 'Lesson Attachments' }}</h4>
+                    <p class="mt-1 text-sm text-slate-500">
+                        {{ isArabic ? 'الأنواع المسموحة: PDF و ZIP و TXT و MD و DOC و DOCX و XLSX و PNG و JPG و JPEG و WEBP.' : 'Allowed types: PDF, ZIP, TXT, MD, DOC, DOCX, XLSX, PNG, JPG, JPEG, and WEBP.' }}
+                    </p>
+                </div>
+            </div>
 
-            <input
-                type="file"
-                multiple
-                accept=".pdf,.zip,.txt,.md,.doc,.docx,.xlsx,.png,.jpg,.jpeg,.webp"
-                class="mt-4 w-full rounded-lg border border-slate-300 p-2"
-                @input="form.attachments = [...$event.target.files]"
-            />
-            <p v-if="form.errors.attachments" class="mt-2 text-sm text-red-600">{{ form.errors.attachments }}</p>
-            <p v-if="form.errors['attachments.0']" class="mt-2 text-sm text-red-600">{{ form.errors['attachments.0'] }}</p>
+            <div class="mt-4">
+                <input
+                    type="file"
+                    multiple
+                    class="w-full rounded-lg border border-slate-300 p-2"
+                    @input="form.attachments = $event.target.files"
+                />
+                <p v-if="form.errors.attachments" class="mt-2 text-sm text-red-600">{{ form.errors.attachments }}</p>
+                <p v-if="form.errors['attachments.0']" class="mt-2 text-sm text-red-600">{{ form.errors['attachments.0'] }}</p>
+            </div>
 
             <div v-if="attachments.length" class="mt-5 space-y-3">
-                <p class="font-semibold text-slate-800">{{ isArabic ? 'المرفقات الحالية' : 'Current Attachments' }}</p>
                 <label
                     v-for="attachment in attachments"
                     :key="attachment.id"
@@ -268,8 +351,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import { useToast } from '@/Composables/useToast';
 import { useTranslations } from '@/Composables/useTranslations';
 
 const props = defineProps({
@@ -286,17 +370,18 @@ defineEmits(['submit', 'cancel']);
 
 const page = usePage();
 const { t } = useTranslations();
+const toaster = useToast();
 const isArabic = computed(() => page.props.locale.current === 'ar');
 const contentEditor = ref(null);
 const mediaInput = ref(null);
 const selectedImage = ref(null);
+const uploadAltText = ref('');
 const mediaItems = ref([]);
 const mediaUploading = ref(false);
 const mediaError = ref('');
-const mediaMessage = ref('');
 const videoError = ref('');
-const videoMessage = ref('');
 const previewUrl = ref('');
+const mediaDrafts = reactive({});
 
 const statusLabel = computed(() => props.form.status === 'published' ? t('admin.published') : t('admin.draft'));
 const statusBadgeClass = computed(() => props.form.status === 'published' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700');
@@ -307,8 +392,24 @@ const normalizeMedia = (items) => items.map((item) => ({
     original_name: item.original_name || item.originalName || 'image.webp',
     width: item.width || 0,
     height: item.height || 0,
-    alt_text: item.alt_text || '',
+    alt_text: item.alt_text || item.altText || '',
 }));
+
+const draftDefaults = (item) => ({
+    position: 'center',
+    width: '50',
+    wrap: false,
+    caption: '',
+    altText: item.alt_text || '',
+});
+
+const draftFor = (item) => {
+    if (!mediaDrafts[item.id]) {
+        mediaDrafts[item.id] = draftDefaults(item);
+    }
+
+    return mediaDrafts[item.id];
+};
 
 const buildPreviewUrl = (provider, id) => {
     if (!provider || !id) {
@@ -328,7 +429,6 @@ const buildPreviewUrl = (provider, id) => {
 
 const clearVideoState = () => {
     videoError.value = '';
-    videoMessage.value = '';
     previewUrl.value = '';
 };
 
@@ -337,7 +437,7 @@ const parseVideoUrl = async () => {
         clearVideoState();
         props.form.video_provider = null;
         props.form.video_id = null;
-        props.form.video_url = null;
+        props.form.video_url = '';
 
         return;
     }
@@ -357,14 +457,15 @@ const parseVideoUrl = async () => {
         props.form.video_id = data.video_id;
         previewUrl.value = buildPreviewUrl(data.video_provider, data.video_id);
         videoError.value = '';
-        videoMessage.value = isArabic.value
-            ? `تم التعرف على فيديو ${data.video_provider}.`
-            : `${data.video_provider} video detected successfully.`;
+        toaster.info(
+            isArabic.value
+                ? `تم التعرف على فيديو ${data.video_provider} بنجاح.`
+                : `${data.video_provider} video detected successfully.`,
+        );
     } catch (error) {
         props.form.video_provider = null;
         props.form.video_id = null;
         previewUrl.value = '';
-        videoMessage.value = '';
         videoError.value = error?.response?.data?.message || (isArabic.value ? 'تعذر التحقق من رابط الفيديو.' : 'Could not validate this video URL.');
     }
 };
@@ -383,10 +484,48 @@ const formatFileSize = (bytes) => {
 const handleMediaSelection = (event) => {
     selectedImage.value = event.target.files?.[0] || null;
     mediaError.value = '';
-    mediaMessage.value = '';
 };
 
-const mediaSnippet = (item) => `<figure><img src="${item.display_url}" alt="${item.alt_text || ''}"><figcaption></figcaption></figure>`;
+const escapeHtml = (value) => String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+const escapeAttribute = (value) => escapeHtml(value)
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+const mediaClasses = (item) => {
+    const draft = draftFor(item);
+    const classes = [];
+
+    if (draft.position === 'full') {
+        classes.push('media-block', 'media-w-100');
+    } else if (draft.position === 'center') {
+        classes.push('media-center', `media-w-${draft.width}`);
+    } else if (draft.position === 'start') {
+        classes.push('media-start', `media-w-${draft.width}`);
+    } else if (draft.position === 'end') {
+        classes.push('media-end', `media-w-${draft.width}`);
+    }
+
+    if (draft.wrap && ['start', 'end'].includes(draft.position)) {
+        classes.push('media-wrap');
+    }
+
+    return classes;
+};
+
+const mediaClassString = (item) => mediaClasses(item).join(' ');
+
+const mediaSnippet = (item) => {
+    const draft = draftFor(item);
+    const classList = mediaClassString(item);
+    const altText = escapeAttribute(draft.altText || '');
+    const caption = draft.caption ? `<figcaption>${escapeHtml(draft.caption)}</figcaption>` : '';
+
+    return `<figure class="${classList}"><img src="${item.display_url}" alt="${altText}">${caption}</figure>`;
+};
 
 const insertAtCursor = (snippet) => {
     const current = props.form.content || '';
@@ -406,12 +545,43 @@ const insertAtCursor = (snippet) => {
     const suffix = after && !after.startsWith('\n') ? '\n\n' : '';
 
     props.form.content = `${before}${prefix}${snippet}${suffix}${after}`;
+    textarea.focus();
+    const caretPosition = before.length + prefix.length + snippet.length;
+    textarea.setSelectionRange(caretPosition, caretPosition);
+    props.form.clearErrors('content');
+};
+
+const selectedText = () => {
+    const textarea = contentEditor.value;
+
+    if (!textarea) {
+        return '';
+    }
+
+    return (props.form.content || '').slice(textarea.selectionStart ?? 0, textarea.selectionEnd ?? 0);
+};
+
+const insertWrapped = (before, after, fallback) => {
+    const text = selectedText().trim() || fallback;
+    insertAtCursor(`${before}${text}${after}`);
+};
+
+const insertHeading = (level) => insertWrapped(`<h${level}>`, `</h${level}>`, isArabic.value ? 'عنوان القسم' : 'Section heading');
+const insertParagraph = () => insertWrapped('<p>', '</p>', isArabic.value ? 'اكتب الفقرة هنا' : 'Write your paragraph here');
+const insertBlockquote = () => insertWrapped('<blockquote>', '</blockquote>', isArabic.value ? 'اقتباس مهم' : 'Important quote');
+const insertLink = () => insertAtCursor(`<p><a href="https://example.com">${escapeHtml(selectedText().trim() || (isArabic.value ? 'نص الرابط' : 'Link text'))}</a></p>`);
+const insertCodeBlock = () => insertAtCursor(`<pre><code>${escapeHtml(selectedText().trim() || '// code example')}</code></pre>`);
+const insertList = (ordered) => {
+    const tag = ordered ? 'ol' : 'ul';
+    const first = isArabic.value ? 'عنصر أول' : 'First item';
+    const second = isArabic.value ? 'عنصر ثانٍ' : 'Second item';
+
+    insertAtCursor(`<${tag}>\n  <li>${first}</li>\n  <li>${second}</li>\n</${tag}>`);
 };
 
 const insertMediaSnippet = (item) => {
     insertAtCursor(mediaSnippet(item));
-    mediaMessage.value = isArabic.value ? 'تم إدراج الصورة داخل محتوى الدرس.' : 'The image snippet was inserted into the lesson content.';
-    mediaError.value = '';
+    toaster.success(isArabic.value ? 'تم إدراج الصورة داخل محتوى الدرس.' : 'The image snippet was inserted into the lesson content.');
 };
 
 const copyMediaSnippet = async (item) => {
@@ -424,8 +594,7 @@ const copyMediaSnippet = async (item) => {
     }
 
     await navigator.clipboard.writeText(snippet);
-    mediaMessage.value = isArabic.value ? 'تم نسخ مقطع الصورة.' : 'The image snippet was copied.';
-    mediaError.value = '';
+    toaster.success(isArabic.value ? 'تم نسخ مقطع الصورة.' : 'The image snippet was copied.');
 };
 
 const uploadImage = async () => {
@@ -435,10 +604,10 @@ const uploadImage = async () => {
 
     const payload = new FormData();
     payload.append('image', selectedImage.value);
+    payload.append('alt_text', uploadAltText.value || '');
 
     mediaUploading.value = true;
     mediaError.value = '';
-    mediaMessage.value = '';
 
     try {
         const { data } = await window.axios.post(`/admin/lessons/${props.lessonId}/media`, payload, {
@@ -449,12 +618,15 @@ const uploadImage = async () => {
 
         const item = normalizeMedia([data])[0];
         mediaItems.value = [item, ...mediaItems.value];
-        mediaMessage.value = isArabic.value ? 'تم رفع الصورة بنجاح.' : 'The image was uploaded successfully.';
+        mediaDrafts[item.id] = draftDefaults(item);
         selectedImage.value = null;
+        uploadAltText.value = '';
 
         if (mediaInput.value) {
             mediaInput.value.value = '';
         }
+
+        toaster.success(isArabic.value ? 'تم رفع الصورة بنجاح.' : 'The image was uploaded successfully.');
     } catch (error) {
         mediaError.value = error?.response?.data?.errors?.image?.[0]
             || error?.response?.data?.message
@@ -466,11 +638,13 @@ const uploadImage = async () => {
 
 watch(() => props.media, (items) => {
     mediaItems.value = normalizeMedia(items);
+    mediaItems.value.forEach((item) => {
+        draftFor(item);
+    });
 }, { immediate: true, deep: true });
 
 watch(() => props.form.video_url, () => {
     videoError.value = '';
-    videoMessage.value = '';
 });
 
 watch(() => props.form.type, (type) => {

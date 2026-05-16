@@ -24,9 +24,11 @@ return new class extends Migration
             $table->string('currency')->default('USD');
             $table->enum('level', ['beginner', 'intermediate', 'advanced'])->default('beginner');
             $table->integer('duration_hours')->nullable();
-            $table->boolean('is_published')->default(false);
+            $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
+            $table->timestamp('published_at')->nullable();
             $table->string('slug')->unique();
             $table->string('meta_description')->nullable();
+            $table->enum('course_format', ['text', 'video', 'mixed'])->default('mixed');
             $table->timestamps();
         });
     }

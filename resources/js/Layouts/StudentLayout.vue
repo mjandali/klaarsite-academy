@@ -25,6 +25,8 @@
                     <div class="hidden items-center gap-3 text-sm md:flex md:flex-wrap md:justify-end md:gap-5 md:text-base">
                         <Link href="/dashboard" class="font-semibold text-slate-700 transition hover:text-blue-700">{{ t('nav.dashboard') }}</Link>
                         <Link href="/dashboard/my-courses" class="text-slate-700 transition hover:text-blue-700">{{ t('nav.my_courses') }}</Link>
+                        <Link href="/dashboard/profile" class="text-slate-700 transition hover:text-blue-700">{{ t('nav.profile') }}</Link>
+                        <Link href="/dashboard/orders" class="text-slate-700 transition hover:text-blue-700">{{ t('nav.orders') }}</Link>
                         <Link href="/courses" class="text-slate-700 transition hover:text-blue-700">{{ t('nav.browse') }}</Link>
                         <Link :href="languageUrl" class="text-slate-600 transition hover:text-blue-700">
                             {{ $page.props.locale.current === 'ar' ? 'English' : 'العربية' }}
@@ -42,6 +44,12 @@
                     </Link>
                     <Link href="/dashboard/my-courses" class="rounded-xl px-3 py-2 text-slate-700 transition hover:bg-blue-50 hover:text-blue-700" @click="isMenuOpen = false">
                         {{ t('nav.my_courses') }}
+                    </Link>
+                    <Link href="/dashboard/profile" class="rounded-xl px-3 py-2 text-slate-700 transition hover:bg-blue-50 hover:text-blue-700" @click="isMenuOpen = false">
+                        {{ t('nav.profile') }}
+                    </Link>
+                    <Link href="/dashboard/orders" class="rounded-xl px-3 py-2 text-slate-700 transition hover:bg-blue-50 hover:text-blue-700" @click="isMenuOpen = false">
+                        {{ t('nav.orders') }}
                     </Link>
                     <Link href="/courses" class="rounded-xl px-3 py-2 text-slate-700 transition hover:bg-blue-50 hover:text-blue-700" @click="isMenuOpen = false">
                         {{ t('nav.browse') }}
@@ -63,7 +71,7 @@
             </nav>
         </header>
 
-        <FlashMessages />
+        <AppFlashToaster />
 
         <main>
             <slot />
@@ -81,7 +89,7 @@
 import { computed, ref } from 'vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { useTranslations } from '@/Composables/useTranslations';
-import FlashMessages from '@/Components/FlashMessages.vue';
+import AppFlashToaster from '@/Components/AppFlashToaster.vue';
 
 const page = usePage();
 const isMenuOpen = ref(false);

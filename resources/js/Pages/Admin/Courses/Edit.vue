@@ -288,6 +288,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import CourseForm from '@/Components/CourseForm.vue';
 import LessonEditor from '@/Components/LessonEditor.vue';
+import { useConfirm } from '@/Composables/useConfirm';
 import { useTranslations } from '@/Composables/useTranslations';
 
 const props = defineProps({
@@ -296,6 +297,7 @@ const props = defineProps({
 
 const page = usePage();
 const { t } = useTranslations();
+const { confirmDestructive } = useConfirm();
 const isArabic = computed(() => page.props.locale.current === 'ar');
 
 const courseForm = useForm({
@@ -412,8 +414,16 @@ const moveSection = (sectionId, direction) => {
     router.post(`/admin/sections/${sectionId}/move`, { direction }, { preserveScroll: true });
 };
 
-const deleteSection = (sectionId) => {
-    if (!confirm(isArabic.value ? 'هل تريد حذف هذا القسم؟' : 'Delete this section?')) {
+const deleteSection = async (sectionId) => {
+    const confirmed = await confirmDestructive({
+        title: isArabic.value ? 'هل تريد حذف هذا القسم؟' : 'Delete this section?',
+        text: isArabic.value
+            ? 'سيتم حذف القسم وكل الدروس والمرفقات التابعة له.'
+            : 'The section and all nested lessons and attachments will be deleted.',
+        confirmButtonText: isArabic.value ? 'حذف القسم' : 'Delete Section',
+    });
+
+    if (!confirmed) {
         return;
     }
 
@@ -494,8 +504,16 @@ const moveLesson = (lessonId, direction) => {
     router.post(`/admin/lessons/${lessonId}/move`, { direction }, { preserveScroll: true });
 };
 
-const deleteLesson = (lessonId) => {
-    if (!confirm(isArabic.value ? 'هل تريد حذف هذا الدرس؟' : 'Delete this lesson?')) {
+const deleteLesson = async (lessonId) => {
+    const confirmed = await confirmDestructive({
+        title: isArabic.value ? 'هل تريد حذف هذا الدرس؟' : 'Delete this lesson?',
+        text: isArabic.value
+            ? 'سيتم حذف الدرس وكل المرفقات والصور التابعة له.'
+            : 'The lesson and all related attachments and images will be deleted.',
+        confirmButtonText: isArabic.value ? 'حذف الدرس' : 'Delete Lesson',
+    });
+
+    if (!confirmed) {
         return;
     }
 

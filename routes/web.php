@@ -32,8 +32,6 @@ Route::post('/stripe/webhook', [CheckoutController::class, 'webhook'])->name('st
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('courses', AdminCourseController::class)->except(['show']);
-    Route::get('/courses/{course}/structure', [AdminCourseController::class, 'structure'])->name('courses.structure');
-    Route::post('/courses/{course}/reorder', [AdminCourseController::class, 'reorderSections'])->name('courses.reorder');
     Route::resource('sections', CourseSectionController::class)->only(['store', 'update', 'destroy']);
     Route::post('/sections/{section}/move', [CourseSectionController::class, 'move'])->name('sections.move');
     Route::resource('lessons', LessonController::class)->only(['store', 'update', 'destroy']);
