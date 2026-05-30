@@ -42,6 +42,22 @@ class RichTextSanitizerTest extends TestCase
         $this->assertSame('<pre><code>$value = 1;</code></pre>', $sanitized);
     }
 
+    public function test_it_preserves_safe_tiptap_html(): void
+    {
+        $sanitized = RichTextSanitizer::sanitize(
+            '<h2>Overview</h2><p><strong>Important</strong> <em>details</em></p><ul><li>First item</li><li>Second item</li></ul><blockquote>Keep this in mind.</blockquote><figure class="media-center media-w-50"><img src="/lesson-media/12" alt="Diagram"><figcaption>Architecture diagram</figcaption></figure><pre><code>const answer = 42;</code></pre>'
+        );
+
+        $this->assertStringContainsString('<h2>Overview</h2>', $sanitized);
+        $this->assertStringContainsString('<strong>Important</strong>', $sanitized);
+        $this->assertStringContainsString('<em>details</em>', $sanitized);
+        $this->assertStringContainsString('<ul><li>First item</li><li>Second item</li></ul>', $sanitized);
+        $this->assertStringContainsString('<blockquote>Keep this in mind.</blockquote>', $sanitized);
+        $this->assertStringContainsString('<figure class="media-center media-w-50">', $sanitized);
+        $this->assertStringContainsString('<figcaption>Architecture diagram</figcaption>', $sanitized);
+        $this->assertStringContainsString('<pre><code>const answer = 42;</code></pre>', $sanitized);
+    }
+
     public function test_it_removes_unsafe_external_images(): void
     {
         $sanitized = RichTextSanitizer::sanitize(
@@ -82,4 +98,18 @@ class RichTextSanitizerTest extends TestCase
         $this->assertStringNotContainsString('arbitrary-class', $sanitized);
         $this->assertStringNotContainsString('evil-class', $sanitized);
     }
+    public function test_it_preserves_safe_text_direction_and_alignment_attributes(): void
+    {
+        $sanitized = RichTextSanitizer::sanitize(
+            '<p dir="ltr" class="text-align-left random" style="color:red">English paragraph</p><h2 dir="rtl" class="text-align-center bad">عنوان</h2><p dir="evil" class="unknown">Bad</p>'
+        );
+
+        $this->assertStringContainsString('<p dir="ltr" class="text-align-left">English paragraph</p>', $sanitized);
+        $this->assertStringContainsString('<h2 dir="rtl" class="text-align-center">عنوان</h2>', $sanitized);
+        $this->assertStringContainsString('<p>Bad</p>', $sanitized);
+        $this->assertStringNotContainsString('style=', $sanitized);
+        $this->assertStringNotContainsString('random', $sanitized);
+        $this->assertStringNotContainsString('dir="evil"', $sanitized);
+    }
+
 }

@@ -20,6 +20,11 @@
         "vue": "^3.5.20"
     },
     "dependencies": {
+        "@tiptap/core": "^3.23.4",
+        "@tiptap/extension-link": "^3.23.4",
+        "@tiptap/extension-placeholder": "^3.23.4",
+        "@tiptap/starter-kit": "^3.23.4",
+        "@tiptap/vue-3": "^3.23.4",
         "sweetalert2": "^11.26.24",
         "vue3-toastify": "^0.2.9"
     }

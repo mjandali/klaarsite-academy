@@ -107,7 +107,9 @@
 
 .prose-content figure,
 .lesson-prose figure {
+    box-sizing: border-box;
     margin: 1.5rem 0;
+    max-width: 100%;
     clear: both;
 }
 
@@ -166,12 +168,14 @@
 
 .prose-content figure.media-wrap.media-start,
 .lesson-prose figure.media-wrap.media-start {
+    clear: none;
     float: left;
     margin: 0 1.5rem 1rem 0;
 }
 
 .prose-content figure.media-wrap.media-end,
 .lesson-prose figure.media-wrap.media-end {
+    clear: none;
     float: right;
     margin: 0 0 1rem 1.5rem;
 }
@@ -224,6 +228,109 @@ html[dir='rtl'] .lesson-prose figure.media-wrap.media-end {
     color: inherit;
 }
 
+
+.lesson-rich-editor-frame {
+    overflow: visible;
+}
+
+.lesson-rich-editor-sticky-controls {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+.lesson-editor-toolbar-button {
+    border-radius: .9rem;
+    border-width: 1px;
+    padding: .65rem .9rem;
+    font-size: .875rem;
+    font-weight: 700;
+    line-height: 1;
+    transition: all .2s ease;
+}
+
+.lesson-editor-toolbar-button:disabled {
+    cursor: not-allowed;
+    opacity: .45;
+}
+
+.lesson-rich-editor .ProseMirror {
+    min-height: 22rem;
+    padding: 1.25rem;
+    outline: none;
+}
+
+.lesson-rich-editor .ProseMirror > *:first-child {
+    margin-top: 0;
+}
+
+.lesson-rich-editor .ProseMirror > *:last-child {
+    margin-bottom: 0;
+}
+
+.lesson-rich-editor .ProseMirror p.is-editor-empty:first-child::before {
+    color: #94a3b8;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+}
+
+html[dir='rtl'] .lesson-rich-editor .ProseMirror p.is-editor-empty:first-child::before {
+    float: right;
+}
+
+.lesson-rich-editor .ProseMirror pre {
+    white-space: pre-wrap;
+}
+
+.lesson-rich-editor .ProseMirror pre code,
+.lesson-prose pre code,
+.prose-content pre code {
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: isolate;
+    white-space: pre;
+}
+
+.lesson-editor-figure {
+    cursor: pointer;
+    transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.lesson-editor-figure:hover {
+    transform: translateY(-1px);
+}
+
+.lesson-editor-figure--selected {
+    outline: 3px solid rgba(29, 78, 216, .25);
+    outline-offset: 6px;
+}
+
+.lesson-editor-figure__image-frame {
+    overflow: hidden;
+    border-radius: 1rem;
+}
+
+.lesson-editor-figure__image {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.lesson-editor-figure__caption {
+    margin-top: .65rem;
+    text-align: center;
+    font-size: .9rem;
+    line-height: 1.8;
+    color: #64748b;
+}
+
+.lesson-editor-figure__caption--placeholder {
+    font-style: italic;
+    opacity: .85;
+}
+
 .Toastify__toast-container {
     font-family: inherit;
 }
@@ -247,7 +354,7 @@ html[dir='ltr'] .swal2-popup {
     font-family: inherit;
 }
 
-@media (max-width: 1279px) {
+@media (max-width: 640px) {
     .prose-content figure.media-start,
     .prose-content figure.media-end,
     .lesson-prose figure.media-start,
@@ -255,5 +362,52 @@ html[dir='ltr'] .swal2-popup {
         width: 100%;
         float: none;
         margin: 1.5rem 0;
+    }
+}
+
+.prose-content [dir='ltr'],
+.lesson-prose [dir='ltr'] {
+    direction: ltr;
+    unicode-bidi: isolate;
+}
+
+.prose-content [dir='rtl'],
+.lesson-prose [dir='rtl'] {
+    direction: rtl;
+    unicode-bidi: isolate;
+}
+
+.prose-content .text-align-start,
+.lesson-prose .text-align-start {
+    text-align: start;
+}
+
+.prose-content .text-align-center,
+.lesson-prose .text-align-center {
+    text-align: center;
+}
+
+.prose-content .text-align-end,
+.lesson-prose .text-align-end {
+    text-align: end;
+}
+
+.prose-content .text-align-left,
+.lesson-prose .text-align-left {
+    text-align: left;
+}
+
+.prose-content .text-align-right,
+.lesson-prose .text-align-right {
+    text-align: right;
+}
+
+.lesson-editor-modal__body .lesson-rich-editor .ProseMirror {
+    min-height: 58vh;
+}
+
+@media (max-width: 768px) {
+    .lesson-editor-modal__body .lesson-rich-editor .ProseMirror {
+        min-height: 52vh;
     }
 }

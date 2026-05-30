@@ -244,33 +244,19 @@
                                             </div>
                                         </div>
 
-                                        <div v-if="editingLessonId === lesson.id" class="mt-5 rounded-2xl border border-slate-200 bg-white p-5">
-                                            <LessonEditor
-                                                :form="lessonUpdateForm"
-                                                :sections="course.sections"
-                                                :attachments="lesson.attachments || []"
-                                                :media="lesson.media || []"
-                                                :lesson-id="lesson.id"
-                                                :title="isArabic ? 'تعديل الدرس' : 'Edit Lesson'"
-                                                :submit-label="isArabic ? 'حفظ الدرس' : 'Save Lesson'"
-                                                @submit="updateLesson"
-                                                @cancel="stopEditingLesson"
-                                            />
+                                        <div
+                                            v-if="editingLessonId === lesson.id"
+                                            class="mt-4 rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800"
+                                        >
+                                            {{ isArabic ? 'محرر هذا الدرس مفتوح الآن في نافذة واسعة.' : 'This lesson is open in the large editor window.' }}
                                         </div>
                                     </div>
 
-                                    <div v-if="creatingLessonForSectionId === section.id" class="rounded-2xl border border-slate-200 bg-white p-5">
-                                        <LessonEditor
-                                            :form="newLessonForm"
-                                            :sections="course.sections"
-                                            :attachments="[]"
-                                            :media="[]"
-                                            :lesson-id="null"
-                                            :title="isArabic ? 'إضافة درس جديد' : 'Add New Lesson'"
-                                            :submit-label="isArabic ? 'إنشاء الدرس' : 'Create Lesson'"
-                                            @submit="createLesson"
-                                            @cancel="stopCreatingLesson"
-                                        />
+                                    <div
+                                        v-if="creatingLessonForSectionId === section.id"
+                                        class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-800"
+                                    >
+                                        {{ isArabic ? 'نافذة إضافة درس جديد مفتوحة الآن.' : 'The add lesson window is open now.' }}
                                     </div>
                                 </div>
                             </article>
@@ -279,11 +265,77 @@
                 </div>
             </div>
         </section>
+
+        <Teleport to="body">
+            <div
+                v-if="isLessonModalOpen"
+                class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 sm:p-5"
+                @click.self="closeLessonModal"
+            >
+                <div
+                    class="flex h-[92vh] w-full max-w-[96vw] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl xl:max-w-[1400px]"
+                    role="dialog"
+                    aria-modal="true"
+                >
+                    <header class="flex flex-col gap-3 border-b border-slate-200 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-wide text-blue-700">
+                                {{ isArabic ? 'محرر الدرس' : 'Lesson Editor' }}
+                            </p>
+                            <h2 class="mt-1 text-2xl font-extrabold text-slate-900">
+                                {{ lessonModalTitle }}
+                            </h2>
+                            <p class="mt-1 text-sm text-slate-500">
+                                {{ isArabic ? 'استخدم هذه النافذة الكبيرة للتركيز على محتوى الدرس. شريط أدوات المحرر سيبقى ظاهراً أثناء التمرير.' : 'Use this large window to focus on lesson content. The editor toolbar stays visible while scrolling.' }}
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="rounded-2xl border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                            @click="closeLessonModal"
+                        >
+                            {{ isArabic ? 'إغلاق' : 'Close' }}
+                        </button>
+                    </header>
+
+                    <div class="lesson-editor-modal__body flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-6">
+                        <div class="mx-auto max-w-6xl rounded-3xl bg-white p-4 shadow-sm sm:p-6">
+                            <LessonEditor
+                                v-if="editingLessonId && activeLesson"
+                                :form="lessonUpdateForm"
+                                :sections="course.sections"
+                                :attachments="activeLesson.attachments || []"
+                                :media="activeLesson.media || []"
+                                :lesson-id="activeLesson.id"
+                                :title="isArabic ? 'تعديل الدرس' : 'Edit Lesson'"
+                                :submit-label="isArabic ? 'حفظ الدرس' : 'Save Lesson'"
+                                @submit="updateLesson"
+                                @cancel="closeLessonModal"
+                            />
+
+                            <LessonEditor
+                                v-else-if="creatingLessonForSectionId"
+                                :form="newLessonForm"
+                                :sections="course.sections"
+                                :attachments="[]"
+                                :media="[]"
+                                :lesson-id="null"
+                                :title="isArabic ? 'إضافة درس جديد' : 'Add New Lesson'"
+                                :submit-label="isArabic ? 'إنشاء الدرس' : 'Create Lesson'"
+                                @submit="createLesson"
+                                @cancel="closeLessonModal"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AdminLayout>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import CourseForm from '@/Components/CourseForm.vue';
@@ -361,6 +413,33 @@ const lessonUpdateForm = useForm(makeLessonDefaults());
 const editingSectionId = ref(null);
 const creatingLessonForSectionId = ref(null);
 const editingLessonId = ref(null);
+const allLessons = computed(() => props.course.sections.flatMap((section) => section.lessons || []));
+const activeLesson = computed(() => allLessons.value.find((lesson) => lesson.id === editingLessonId.value) || null);
+const isLessonModalOpen = computed(() => Boolean(editingLessonId.value || creatingLessonForSectionId.value));
+const lessonModalTitle = computed(() => {
+    if (editingLessonId.value && activeLesson.value) {
+        return activeLesson.value.title;
+    }
+
+    return isArabic.value ? 'إضافة درس جديد' : 'Add New Lesson';
+});
+
+const closeLessonModal = () => {
+    if (editingLessonId.value) {
+        stopEditingLesson();
+        return;
+    }
+
+    stopCreatingLesson();
+};
+
+watch(isLessonModalOpen, (isOpen) => {
+    document.documentElement.classList.toggle('overflow-hidden', isOpen);
+});
+
+onBeforeUnmount(() => {
+    document.documentElement.classList.remove('overflow-hidden');
+});
 
 const resetLessonForm = (form, values) => {
     form.clearErrors();

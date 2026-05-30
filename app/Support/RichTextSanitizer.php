@@ -73,6 +73,32 @@ class RichTextSanitizer
         'media-wrap',
     ];
 
+    /**
+     * @var array<int, string>
+     */
+    private const ALLOWED_TEXT_CLASSES = [
+        'text-align-start',
+        'text-align-center',
+        'text-align-end',
+        'text-align-left',
+        'text-align-right',
+    ];
+
+    /**
+     * @var array<int, string>
+     */
+    private const TEXT_BLOCK_TAGS = [
+        'blockquote',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+        'h5',
+        'h6',
+        'li',
+        'p',
+    ];
+
     public static function sanitize(?string $html): ?string
     {
         if ($html === null) {
@@ -166,35 +192,14 @@ class RichTextSanitizer
         $href = $tag === 'a' ? trim((string) $element->getAttribute('href')) : '';
         $src = $tag === 'img' ? trim((string) $element->getAttribute('src')) : '';
         $alt = $tag === 'img' ? trim((string) $element->getAttribute('alt')) : '';
+        $dir = in_array($tag, self::TEXT_BLOCK_TAGS, true)
+            ? self::sanitizeDirection((string) $element->getAttribute('dir'))
+            : null;
         $classes = in_array($tag, ['figure', 'img'], true)
-            ? self::sanitizeClasses((string) $element->getAttribute('class'))
-            : [];
-
-        if (! $element->hasAttributes()) {
-            if ($tag === 'a' && $href !== '' && self::isSafeUrl($href)) {
-                $element->setAttribute('href', $href);
-
-                if (str_starts_with($href, 'http://') || str_starts_with($href, 'https://')) {
-                    $element->setAttribute('target', '_blank');
-                    $element->setAttribute('rel', 'noopener noreferrer nofollow');
-                }
-            }
-
-            if ($tag === 'img' && $src !== '' && self::isSafeImageUrl($src)) {
-                $element->setAttribute('src', $src);
-                $element->setAttribute('alt', $alt);
-
-                if ($classes !== []) {
-                    $element->setAttribute('class', implode(' ', $classes));
-                }
-            }
-
-            if ($tag === 'figure' && $classes !== []) {
-                $element->setAttribute('class', implode(' ', $classes));
-            }
-
-            return;
-        }
+            ? self::sanitizeClasses((string) $element->getAttribute('class'), self::ALLOWED_MEDIA_CLASSES)
+            : (in_array($tag, self::TEXT_BLOCK_TAGS, true)
+                ? self::sanitizeClasses((string) $element->getAttribute('class'), self::ALLOWED_TEXT_CLASSES)
+                : []);
 
         $attributesToRemove = [];
 
@@ -204,6 +209,18 @@ class RichTextSanitizer
 
         foreach ($attributesToRemove as $attributeName) {
             $element->removeAttribute($attributeName);
+        }
+
+        if (in_array($tag, self::TEXT_BLOCK_TAGS, true)) {
+            if ($dir !== null) {
+                $element->setAttribute('dir', $dir);
+            }
+
+            if ($classes !== []) {
+                $element->setAttribute('class', implode(' ', $classes));
+            }
+
+            return;
         }
 
         if ($tag === 'img') {
@@ -284,20 +301,26 @@ class RichTextSanitizer
     }
 
     /**
+     * @param array<int, string> $allowedClasses
      * @return array<int, string>
      */
-    private static function sanitizeClasses(string $classList): array
+    private static function sanitizeClasses(string $classList, array $allowedClasses): array
     {
         $tokens = preg_split('/\s+/', trim($classList)) ?: [];
         $safe = [];
 
         foreach ($tokens as $token) {
-            if ($token !== '' && in_array($token, self::ALLOWED_MEDIA_CLASSES, true) && ! in_array($token, $safe, true)) {
+            if ($token !== '' && in_array($token, $allowedClasses, true) && ! in_array($token, $safe, true)) {
                 $safe[] = $token;
             }
         }
 
         return $safe;
+    }
+
+    private static function sanitizeDirection(string $direction): ?string
+    {
+        return in_array($direction, ['rtl', 'ltr', 'auto'], true) ? $direction : null;
     }
 
     private static function escapeHtml(string $html): ?string
