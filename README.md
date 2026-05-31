@@ -90,3 +90,18 @@ Before production launch:
 - Frontend production build succeeded with Vite.
 
 Note: full database migrations/tests could not be executed in the current container because its PHP build does not include a database PDO driver such as SQLite/MySQL, and some artisan output commands require the PHP DOM extension. Run `php artisan migrate:fresh --seed` in your local PHP environment.
+
+# Run deploy command:
+sudo -iu deploy
+
+# then
+/home/deploy/bin/academy-deploy.sh
+
+# or directly from root:
+sudo -u deploy /home/deploy/bin/academy-deploy.sh
+
+# deploy script path:
+/home/deploy/bin/academy-deploy.sh
+
+# project folder:
+/home/deploy/apps/academy

@@ -5,7 +5,9 @@
         <section class="bg-gradient-to-br from-blue-800 via-blue-700 to-slate-900 py-16 text-white sm:py-20">
             <div class="mx-auto max-w-4xl px-4 text-center sm:px-6">
                 <p class="mb-5 inline-flex rounded-full bg-white/10 px-4 py-1 text-blue-100">Klaarsite Academy</p>
-                <h1 class="mb-6 text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl">{{ t('home.title') }}</h1>
+                <h1 class="mb-6 text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl">{{ t('home.title_l1') }}</h1>
+                <h1 class="mb-6 text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl">{{ t('home.title_l2') }}</h1>
+
                 <p class="mx-auto mb-8 max-w-3xl text-base leading-8 text-blue-100 sm:text-lg md:text-xl">{{ t('home.subtitle') }}</p>
                 <Link
                     href="/courses"

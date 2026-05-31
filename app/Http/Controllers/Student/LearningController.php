@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
+use App\Models\AssessmentQuestion;
 use App\Models\Course;
 use App\Models\Enrollment;
 use App\Models\Lesson;
@@ -23,7 +24,7 @@ class LearningController extends Controller
         $enrollment = $this->enrollmentOrFail($request, $course)->fresh();
         $course->load([
             'sections' => fn ($query) => $query->orderBy('order'),
-            'sections.lessons' => fn ($query) => $query->published()->orderBy('order'),
+            'sections.lessons' => fn ($query) => $query->published()->withCount(['assessmentQuestions as exercise_questions_count' => fn ($assessmentQuery) => $assessmentQuery->active()->where('assessment_type', AssessmentQuestion::ASSESSMENT_LESSON)])->orderBy('order'),
         ]);
 
         $completedLessonIds = $request->user()->lessonProgress()
@@ -42,6 +43,7 @@ class LearningController extends Controller
             'resumeUrl' => $resumeLesson ? route('student.learn.lesson', [$course, $resumeLesson]) : null,
             'courseCompleted' => (int) $enrollment->progress_percentage >= 100,
             'publishedLessonsCount' => $orderedLessons->count(),
+            'finalExamQuestionsCount' => AssessmentQuestion::query()->forFinalExam($course)->active()->count(),
         ]);
     }
 
@@ -54,9 +56,10 @@ class LearningController extends Controller
 
         $course->load([
             'sections' => fn ($query) => $query->orderBy('order'),
-            'sections.lessons' => fn ($query) => $query->published()->orderBy('order'),
+            'sections.lessons' => fn ($query) => $query->published()->withCount(['assessmentQuestions as exercise_questions_count' => fn ($assessmentQuery) => $assessmentQuery->active()->where('assessment_type', AssessmentQuestion::ASSESSMENT_LESSON)])->orderBy('order'),
         ]);
         $lesson->load('attachments', 'media', 'section');
+        $lesson->loadCount(['assessmentQuestions as exercise_questions_count' => fn ($query) => $query->active()->where('assessment_type', AssessmentQuestion::ASSESSMENT_LESSON)]);
 
         LessonProgress::updateOrCreate(
             ['user_id' => $request->user()->id, 'lesson_id' => $lesson->id],
@@ -84,6 +87,7 @@ class LearningController extends Controller
             'isCompleted' => $completedLessonIds->contains($lesson->id),
             'courseOverviewUrl' => route('student.learn.course', $course),
             'courseCompleted' => (int) $enrollment->progress_percentage >= 100,
+            'exerciseQuestionsCount' => (int) $lesson->exercise_questions_count,
         ]);
     }
 

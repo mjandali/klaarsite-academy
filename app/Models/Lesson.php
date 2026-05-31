@@ -83,6 +83,11 @@ class Lesson extends Model
         return $this->hasMany(LessonProgress::class);
     }
 
+    public function assessmentQuestions()
+    {
+        return $this->hasMany(AssessmentQuestion::class)->orderBy('order');
+    }
+
     public function scopePublished($query)
     {
         return $query->where('status', 'published');

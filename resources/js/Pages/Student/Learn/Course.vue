@@ -76,6 +76,28 @@
                             </p>
                         </div>
 
+                        <article v-if="finalExamQuestionsCount > 0" class="surface-card border border-blue-100 bg-blue-50/40 p-6 shadow-sm">
+                            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                                <div>
+                                    <p class="text-sm font-bold uppercase tracking-wide text-blue-700">
+                                        {{ isArabic ? 'اختبار نهاية الكورس' : 'Course Final Exam' }}
+                                    </p>
+                                    <h2 class="mt-2 text-2xl font-extrabold text-slate-900">
+                                        {{ isArabic ? 'اختبر فهمك للكورس كاملاً' : 'Test your understanding of the full course' }}
+                                    </h2>
+                                    <p class="mt-2 text-sm leading-7 text-slate-600">
+                                        {{ isArabic ? `يحتوي الاختبار على ${finalExamQuestionsCount} سؤالاً، وتظهر النتيجة مباشرة بعد الإرسال.` : `The exam has ${finalExamQuestionsCount} questions and shows your result immediately after submission.` }}
+                                    </p>
+                                </div>
+                                <Link
+                                    :href="`/dashboard/learn/${course.slug}/final-exam`"
+                                    class="inline-flex items-center justify-center rounded-2xl bg-blue-700 px-5 py-3 text-center font-bold text-white transition hover:bg-blue-800"
+                                >
+                                    {{ isArabic ? 'بدء الاختبار النهائي' : 'Start Final Exam' }}
+                                </Link>
+                            </div>
+                        </article>
+
                         <div class="space-y-5">
                             <article v-for="section in course.sections" :key="section.id" class="surface-card p-5 shadow-sm">
                                 <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -138,6 +160,7 @@ const props = defineProps({
     resumeUrl: String,
     courseCompleted: Boolean,
     publishedLessonsCount: Number,
+    finalExamQuestionsCount: { type: Number, default: 0 },
 });
 
 const page = usePage();

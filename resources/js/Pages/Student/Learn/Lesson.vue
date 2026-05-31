@@ -77,6 +77,13 @@
                                         >
                                             {{ isArabic ? 'الدرس التالي ←' : 'Next Lesson →' }}
                                         </Link>
+                                        <Link
+                                            v-if="exerciseQuestionsCount > 0"
+                                            :href="`/dashboard/learn/${course.slug}/lessons/${currentLesson.id}/exercise`"
+                                            class="inline-flex items-center justify-center rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 font-bold text-blue-700 transition hover:bg-blue-100"
+                                        >
+                                            {{ isArabic ? `حل تمرين الدرس (${exerciseQuestionsCount})` : `Lesson exercise (${exerciseQuestionsCount})` }}
+                                        </Link>
                                     </div>
 
                                     <form class="lg:ms-auto" @submit.prevent="complete">
@@ -115,6 +122,7 @@ const props = defineProps({
     isCompleted: Boolean,
     courseOverviewUrl: String,
     courseCompleted: Boolean,
+    exerciseQuestionsCount: { type: Number, default: 0 },
 });
 
 const page = usePage();

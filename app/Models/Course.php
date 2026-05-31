@@ -84,6 +84,24 @@ class Course extends Model
         return $this->hasMany(Order::class);
     }
 
+    public function assessmentQuestions()
+    {
+        return $this->hasMany(AssessmentQuestion::class)->orderBy('order');
+    }
+
+    public function finalExamQuestions()
+    {
+        return $this->hasMany(AssessmentQuestion::class)
+            ->where('assessment_type', AssessmentQuestion::ASSESSMENT_FINAL_EXAM)
+            ->whereNull('lesson_id')
+            ->orderBy('order');
+    }
+
+    public function assessmentAttempts()
+    {
+        return $this->hasMany(AssessmentAttempt::class);
+    }
+
     public function scopePublished($query)
     {
         return $query->where('status', 'published');
