@@ -22,8 +22,8 @@ return new class extends Migration
             $table->json('settings')->nullable();
             $table->timestamps();
 
-            $table->index(['course_id', 'assessment_type', 'lesson_id', 'is_active']);
-            $table->index(['lesson_id', 'order']);
+            $table->index(['course_id', 'assessment_type', 'lesson_id', 'is_active'], 'aq_course_type_lesson_active_idx');
+            $table->index(['lesson_id', 'order'], 'aq_lesson_order_idx');
         });
 
         Schema::create('assessment_question_options', function (Blueprint $table): void {
@@ -38,7 +38,7 @@ return new class extends Migration
             $table->json('settings')->nullable();
             $table->timestamps();
 
-            $table->index(['assessment_question_id', 'order']);
+            $table->index(['assessment_question_id', 'order'], 'aqo_question_order_idx');
         });
 
         Schema::create('assessment_attempts', function (Blueprint $table): void {
@@ -54,8 +54,8 @@ return new class extends Migration
             $table->timestamp('submitted_at')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'course_id', 'assessment_type']);
-            $table->index(['lesson_id', 'assessment_type']);
+            $table->index(['user_id', 'course_id', 'assessment_type'], 'aa_user_course_type_idx');
+            $table->index(['lesson_id', 'assessment_type'], 'aa_lesson_type_idx');
         });
 
         Schema::create('assessment_answers', function (Blueprint $table): void {
